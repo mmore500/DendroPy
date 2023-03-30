@@ -154,7 +154,7 @@ The current release of DendroPy-calver is version {}.
 
 """.format(__version__))
 
-setup(name='DendroPy',
+setup(name='DendroPy-calver',
       version=__version__,
       author='forked by Matthew Andres Moreno from Jeet Sukumaran and Mark T. Holder',
       author_email='m.more500@gmail.com, jeetsukumaran@gmail.com, mtholder@ku.edu',
