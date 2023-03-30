@@ -1,3 +1,25 @@
+Release 2023.329.0
+------------------
+
+- Corresponds to commit `0b0d8df` on DendroPy main branch
+- Since Release 4.5.2:
+  - #132: raxml set rand seed
+    - from @NoahAmsel
+    - https://github.com/jeetsukumaran/DendroPy/pull/132
+  - #136: Use case_sensitive_taxon_labels in kwargs to set TaxonNamespace is_case_sensitive
+    - from @crosenth
+    - https://github.com/jeetsukumaran/DendroPy/pull/136
+  - #148: Bugfix: Tree mrca method does not account for internal unifurcation
+    - from @mmore500
+    - https://github.com/jeetsukumaran/DendroPy/pull/148
+- Additionally includes pending pull requests:
+  - #153: Fix minor copy/paste pre/post-order typos in docs from
+    - https://github.com/jeetsukumaran/DendroPy/pull/153
+    - from @mmore500
+  - #155: Remove deprecated random.sample from Tree.shuffle_taxa()
+    - https://github.com/jeetsukumaran/DendroPy/pull/155
+    - from @mmore500
+
 Release 4.5.2
 -------------
 
