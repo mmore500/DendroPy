@@ -59,7 +59,7 @@ def _compose_list(values, prefix=None):
 # Identification
 
 __version__ = re.match(r".*^__version__\s*=\s*['\"](.*?)['\"]\s*$.*", _read(["src", "dendropy", "__init__.py"]), re.S | re.M).group(1)
-sys.stderr.write("-setup.py: DendroPy version {}\n".format(__version__))
+sys.stderr.write("-setup.py: DendroPy-calver version {}\n".format(__version__))
 
 ###############################################################################
 # setuptools/distutils/etc. import and configuration
@@ -143,25 +143,23 @@ else:
 
 ### compose long description ###
 long_description = _read(["README.rst"])
-long_description = long_description.replace("DendroPy-4.x.x", "DendroPy-{}".format(__version__))
-long_description = long_description.replace("""download the source code archive""",
-    """`download the source code archive <http://pypi.python.org/packages/source/D/DendroPy/DendroPy-{}.tar.gz>`_""".format(__version__))
+long_description = long_description.replace("DendroPy-4.x.x", "DendroPy-calver-{}".format(__version__))
 
 long_description = long_description + ("""\
 
 Current Release
 ===============
 
-The current release of DendroPy is version {}.
+The current release of DendroPy-calver is version {}.
 
 """.format(__version__))
 
 setup(name='DendroPy',
       version=__version__,
-      author='Jeet Sukumaran and Mark T. Holder',
-      author_email='jeetsukumaran@gmail.com, mtholder@ku.edu',
-      url='http://packages.python.org/DendroPy/',
-      description="A Python library for phylogenetics and phylogenetic computing: reading, writing, simulation, processing and manipulation of phylogenetic trees (phylogenies) and characters.",
+      author='forked by Matthew Andres Moreno from Jeet Sukumaran and Mark T. Holder',
+      author_email='m.more500@gmail.com, jeetsukumaran@gmail.com, mtholder@ku.edu',
+      url='http://github.com/mmore500/DendroPy/',
+      description="A Python library for phylogenetics and phylogenetic computing: reading, writing, simulation, processing and manipulation of phylogenetic trees (phylogenies) and characters. Calendar-versioned fork tracking DendroPy main branch.",
       license='BSD',
       packages=PACKAGES,
       package_dir={"": "src"},
