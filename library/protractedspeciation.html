@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>dendropy.model.protractedspeciation: The Protracted Speciation (Birth-Death) Model &#8212; DendroPy 5.0.2 documentation</title>
+    <title>dendropy.model.protractedspeciation: The Protracted Speciation (Birth-Death) Model &#8212; DendroPy 5.0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/rtd.css?v=cedc6a2f" />
     
-    <script src="../_static/documentation_options.js?v=5df4c8d1"></script>
+    <script src="../_static/documentation_options.js?v=ede7f5ad"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="parsimony.html" title="dendropy.model.parsimony: The Parsimony Model"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.model.protractedspeciation</span></code>: The Protracted Speciation (Birth-Death) Model</a></li> 
       </ul>
@@ -69,15 +69,15 @@ time taken by any species that succeeded in speciating completely.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The birth rate, b (the incipient species birth
+<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The birth rate, b (the incipient species birth
 rate and the “good” species birth rate are assumed to be equal):
 the rate at which new (incipient) species are produced from
 either incipient or “good” species lineages.</p></li>
-<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The rate at which incipient species get converted to good
+<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The rate at which incipient species get converted to good
 species, $lambda_1$.</p></li>
-<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
+<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
 incipient species go extinct.</p></li>
-<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
 </ul>
 </dd>
@@ -95,18 +95,18 @@ in Etienne et al.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The duration of speciation.</p></li>
-<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The birth rate, b (the incipient species birth
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The duration of speciation.</p></li>
+<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The birth rate, b (the incipient species birth
 rate and the “good” species birth rate are assumed to be equal):
 the rate at which new (incipient) species are produced from
 either incipient or “good” species lineages.</p></li>
-<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The rate at which incipient species get converted to good
+<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The rate at which incipient species get converted to good
 species, $lambda_1$.</p></li>
-<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
+<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
 incipient species go extinct.</p></li>
-<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
-<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
+<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
 </ul>
 </dd>
@@ -124,17 +124,17 @@ process parameters, following eq. 8 of Etienne et al (2014).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The birth rate, b (the incipient species birth
+<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The birth rate, b (the incipient species birth
 rate and the “good” species birth rate are assumed to be equal):
 the rate at which new (incipient) species are produced from
 either incipient or “good” species lineages.</p></li>
-<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The rate at which incipient species get converted to good
+<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The rate at which incipient species get converted to good
 species, $lambda_1$.</p></li>
-<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
+<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
 incipient species go extinct.</p></li>
-<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
-<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
+<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
 </ul>
 </dd>
@@ -153,18 +153,18 @@ in Etienne et al.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The duration of speciation.</p></li>
-<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The birth rate, b (the incipient species birth
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The duration of speciation.</p></li>
+<li><p><strong>speciation_initiation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The birth rate, b (the incipient species birth
 rate and the “good” species birth rate are assumed to be equal):
 the rate at which new (incipient) species are produced from
 either incipient or “good” species lineages.</p></li>
-<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The rate at which incipient species get converted to good
+<li><p><strong>speciation_completion_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The rate at which incipient species get converted to good
 species, $lambda_1$.</p></li>
-<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
+<li><p><strong>incipient_species_extinction_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The incipient species exctinction rate, $mu_1$: the rate at which
 incipient species go extinct.</p></li>
-<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">D</span></code> (as given in Eq. 5 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
-<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
+<li><p><strong>phi</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (as given in Eq. 7 in Etienne et al. 2014). Will be
 calculated if not specified.</p></li>
 </ul>
 </dd>
@@ -217,12 +217,12 @@ consisting of only “good” species).</p></li>
 the lineage tree (i.e. the tree with both incipient and good
 species). If <code class="docutils literal notranslate"><span class="pre">None</span></code>, then do not terminate based on the
 number of tipes on the incipient species tree.</p></li>
-<li><p><strong>is_retry_on_total_extinction</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, then a TreeSimTotalExtinctionException will be raised
+<li><p><strong>is_retry_on_total_extinction</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, then a TreeSimTotalExtinctionException will be raised
 if all lineages go extinct before the termination conditions are
 met. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>: if all lineages go extinct before the
 termination conditions are met, then the simulation is rerun, up to
 a maximum of <code class="docutils literal notranslate"><span class="pre">max_retries</span></code>.</p></li>
-<li><p><strong>max_retries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Maximum number of runs to execute in the event of
+<li><p><strong>max_retries</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of runs to execute in the event of
 prematurely-terminated simulations due to all lineages going
 extinct. Once this number or re-runs is exceed, then
 TreeSimTotalExtinctionException is raised. Defaults to 1000. Set to
@@ -329,7 +329,7 @@ TreeSimTotalExtinctionException is raised. Defaults to 1000. Set to
         <h3>Obtaining</h3>
         <ul>
             <li><a target="_blank" href="http://pypi.python.org/pypi/DendroPy">Install from the Python Package Index</a></li>
-            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.2.tar.gz">Download the Source Code Archive</a></li>
+            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.8.tar.gz">Download the Source Code Archive</a></li>
             <li><a target="_blank" href="http://github.com/jeetsukumaran/DendroPy">Clone the Source Code Repository</a></li>
         </ul>
     </div>
@@ -393,13 +393,13 @@ TreeSimTotalExtinctionException is raised. Defaults to 1000. Set to
         <li class="right" >
           <a href="parsimony.html" title="dendropy.model.parsimony: The Parsimony Model"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.model.protractedspeciation</span></code>: The Protracted Speciation (Birth-Death) Model</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2009-2024, Jeet Sukumaran and Mark T. Holder.
+    &#169; Copyright 2009-2026, Jeet Sukumaran and Mark T. Holder.
     </div>
   </body>
 </html>

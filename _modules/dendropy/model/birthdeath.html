@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dendropy.model.birthdeath &#8212; DendroPy 5.0.2 documentation</title>
+    <title>dendropy.model.birthdeath &#8212; DendroPy 5.0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../../_static/rtd.css?v=cedc6a2f" />
     
-    <script src="../../../_static/documentation_options.js?v=5df4c8d1"></script>
+    <script src="../../../_static/documentation_options.js?v=ede7f5ad"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     
@@ -24,7 +24,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">dendropy.model.birthdeath</a></li> 
       </ul>
@@ -231,28 +231,28 @@
             <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;num_extinct_tips&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;num_total_tips&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;max_time&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">)</span> <span class="p">):</span>
-        <span class="k">if</span> <span class="s2">&quot;taxon_namespace&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="c1">### cannot support legacy approach, b/c ``taxon_namespace`` may grow during function, leading to unpredictable behavior</span>
-            <span class="c1"># deprecate.dendropy_deprecation_warning(</span>
-            <span class="c1">#         preamble=&quot;Deprecated: The &#39;taxon_namespace&#39; argument can no longer be used to specify a termination condition as a side-effect. Use one or more of the following instead with the length of the taxon namespace instance as a value: &#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;num_total_tips&#39;&quot;,</span>
-            <span class="c1">#         old_construct=&quot;tree = birth_death_tree(\n    ...\n    taxon_namespace=taxon_namespace,\n    ...\n)&quot;,</span>
-            <span class="c1">#         new_construct=&quot;tree = birth_death_tree(\n    ...\n    taxon_namespace=taxon_namespace,\n    num_extant_tips=len(taxon_namespace),\n    ...\n)&quot;)</span>
-            <span class="c1"># kwargs[&quot;num_extant_tips&quot;] = len(kwargs[&quot;taxon_namespace&quot;])</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;taxon_namespace&#39; argument can no longer be used to specify a termination condition as a side-effect.&quot;</span>
-                             <span class="s2">&quot;Use one or more of the following instead with the length of the taxon namespace instance as a value: &quot;</span>
-                             <span class="s2">&quot;&#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;num_total_tips&#39;.</span><span class="se">\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;That is, instead of:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;    tree = birth_death_tree(</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">        taxon_namespace=taxon_namespace,</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">    )</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;Use:</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;    ntax = len(taxon_namespace)</span><span class="se">\n</span><span class="s2">    tree = birth_death_tree(</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">        taxon_namespace=taxon_namespace,</span><span class="se">\n</span><span class="s2">        num_extant_tips=ntax,</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">    )</span><span class="se">\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Or (recommended):</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;    tree = birth_death_tree(</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">        taxon_namespace=taxon_namespace,</span><span class="se">\n</span><span class="s2">        num_extant_tips=100,</span><span class="se">\n</span><span class="s2">        ...</span><span class="se">\n</span><span class="s2">    )</span><span class="se">\n</span><span class="s2">&quot;</span>
-                             <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Note that the taxon namespace instance size may grow during any particular call of the function depending on taxon assignment/creation settings, so&quot;</span>
-                             <span class="s2">&quot; for stable and predictable behavor it is important to take a snapshot of the desired taxon namespace size before any call of the function, or, better yet&quot;</span>
-                             <span class="s2">&quot; simply pass in a constant value.&quot;</span>
-                             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One or more of the following must be specified: &#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;max_time&#39;&quot;</span><span class="p">)</span>
+        <span class="c1"># if &quot;taxon_namespace&quot; in kwargs:</span>
+        <span class="c1">#     ### cannot support legacy approach, b/c ``taxon_namespace`` may grow during function, leading to unpredictable behavior</span>
+        <span class="c1">#     # deprecate.dendropy_deprecation_warning(</span>
+        <span class="c1">#     #         preamble=&quot;Deprecated: The &#39;taxon_namespace&#39; argument can no longer be used to specify a termination condition as a side-effect. Use one or more of the following instead with the length of the taxon namespace instance as a value: &#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;num_total_tips&#39;&quot;,</span>
+        <span class="c1">#     #         old_construct=&quot;tree = birth_death_tree(\n    ...\n    taxon_namespace=taxon_namespace,\n    ...\n)&quot;,</span>
+        <span class="c1">#     #         new_construct=&quot;tree = birth_death_tree(\n    ...\n    taxon_namespace=taxon_namespace,\n    num_extant_tips=len(taxon_namespace),\n    ...\n)&quot;)</span>
+        <span class="c1">#     # kwargs[&quot;num_extant_tips&quot;] = len(kwargs[&quot;taxon_namespace&quot;])</span>
+        <span class="c1">#     raise ValueError(&quot;The &#39;taxon_namespace&#39; argument can no longer be used to specify a termination condition as a side-effect.&quot;</span>
+        <span class="c1">#                      &quot;Use one or more of the following instead with the length of the taxon namespace instance as a value: &quot;</span>
+        <span class="c1">#                      &quot;&#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;num_total_tips&#39;.\n&quot;</span>
+        <span class="c1">#                      &quot;That is, instead of:\n\n&quot;</span>
+        <span class="c1">#                      &quot;    tree = birth_death_tree(\n        ...\n        taxon_namespace=taxon_namespace,\n        ...\n    )\n\n&quot;</span>
+        <span class="c1">#                      &quot;Use:\n\n&quot;</span>
+        <span class="c1">#                      &quot;    ntax = len(taxon_namespace)\n    tree = birth_death_tree(\n        ...\n        taxon_namespace=taxon_namespace,\n        num_extant_tips=ntax,\n        ...\n    )\n&quot;</span>
+        <span class="c1">#                      &quot;\nOr (recommended):\n\n&quot;</span>
+        <span class="c1">#                      &quot;    tree = birth_death_tree(\n        ...\n        taxon_namespace=taxon_namespace,\n        num_extant_tips=100,\n        ...\n    )\n&quot;</span>
+        <span class="c1">#                      &quot;\nNote that the taxon namespace instance size may grow during any particular call of the function depending on taxon assignment/creation settings, so&quot;</span>
+        <span class="c1">#                      &quot; for stable and predictable behavor it is important to take a snapshot of the desired taxon namespace size before any call of the function, or, better yet&quot;</span>
+        <span class="c1">#                      &quot; simply pass in a constant value.&quot;</span>
+        <span class="c1">#                      )</span>
+        <span class="c1">#  else:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One or more of the following must be specified: &#39;num_extant_tips&#39;, &#39;num_extinct_tips&#39;, or &#39;max_time&#39;&quot;</span><span class="p">)</span>
     <span class="n">target_num_extant_tips</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;num_extant_tips&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">target_num_extinct_tips</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;num_extinct_tips&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">target_num_total_tips</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;num_total_tips&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1896,7 +1896,7 @@
         <h3>Obtaining</h3>
         <ul>
             <li><a target="_blank" href="http://pypi.python.org/pypi/DendroPy">Install from the Python Package Index</a></li>
-            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.2.tar.gz">Download the Source Code Archive</a></li>
+            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.8.tar.gz">Download the Source Code Archive</a></li>
             <li><a target="_blank" href="http://github.com/jeetsukumaran/DendroPy">Clone the Source Code Repository</a></li>
         </ul>
     </div>
@@ -1954,13 +1954,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">dendropy.model.birthdeath</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2009-2024, Jeet Sukumaran and Mark T. Holder.
+    &#169; Copyright 2009-2026, Jeet Sukumaran and Mark T. Holder.
     </div>
   </body>
 </html>

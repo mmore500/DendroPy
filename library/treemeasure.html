@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>dendropy.calculate.treemeasure: Unary Tree Statistics and Metrics &#8212; DendroPy 5.0.2 documentation</title>
+    <title>dendropy.calculate.treemeasure: Unary Tree Statistics and Metrics &#8212; DendroPy 5.0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/rtd.css?v=cedc6a2f" />
     
-    <script src="../_static/documentation_options.js?v=5df4c8d1"></script>
+    <script src="../_static/documentation_options.js?v=ede7f5ad"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="treeshape.html" title="dendropy.model.treeshape: Models of Tree Shape"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.calculate.treemeasure</span></code>: Unary Tree Statistics and Metrics</a></li> 
       </ul>
@@ -68,6 +68,12 @@ terminal node.</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="dendropy.calculate.treemeasure.coalescence_ages">
+<span class="sig-prename descclassname"><span class="pre">dendropy.calculate.treemeasure.</span></span><span class="sig-name descname"><span class="pre">coalescence_ages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dendropy/calculate/treemeasure.html#coalescence_ages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dendropy.calculate.treemeasure.coalescence_ages" title="Link to this definition">¶</a></dt>
+<dd><p>Returns vector of splits indexed in backward time.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="dendropy.calculate.treemeasure.colless_tree_imbalance">
 <span class="sig-prename descclassname"><span class="pre">dendropy.calculate.treemeasure.</span></span><span class="sig-name descname"><span class="pre">colless_tree_imbalance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dendropy/calculate/treemeasure.html#colless_tree_imbalance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dendropy.calculate.treemeasure.colless_tree_imbalance" title="Link to this definition">¶</a></dt>
 <dd><p>Returns Colless’ tree imbalance or I statistic: the sum of differences
@@ -99,6 +105,24 @@ Arrangements) model</p>
 </li>
 </ul>
 </div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dendropy.calculate.treemeasure.divergence_times">
+<span class="sig-prename descclassname"><span class="pre">dendropy.calculate.treemeasure.</span></span><span class="sig-name descname"><span class="pre">divergence_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dendropy/calculate/treemeasure.html#divergence_times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dendropy.calculate.treemeasure.divergence_times" title="Link to this definition">¶</a></dt>
+<dd><p>Returns vector of splits indexed in forward time.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dendropy.calculate.treemeasure.node_ages">
+<span class="sig-prename descclassname"><span class="pre">dendropy.calculate.treemeasure.</span></span><span class="sig-name descname"><span class="pre">node_ages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_internal_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dendropy/calculate/treemeasure.html#node_ages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dendropy.calculate.treemeasure.node_ages" title="Link to this definition">¶</a></dt>
+<dd><p>Returns vector of branching events indexed in backward time.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dendropy.calculate.treemeasure.node_depths">
+<span class="sig-prename descclassname"><span class="pre">dendropy.calculate.treemeasure.</span></span><span class="sig-name descname"><span class="pre">node_depths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_internal_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dendropy/calculate/treemeasure.html#node_depths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dendropy.calculate.treemeasure.node_depths" title="Link to this definition">¶</a></dt>
+<dd><p>Returns vector of branching events indexed in forward time.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -198,7 +222,11 @@ internal branches.</p>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.B1"><code class="docutils literal notranslate"><span class="pre">B1</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.N_bar"><code class="docutils literal notranslate"><span class="pre">N_bar</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.PatristicDistanceMatrix"><code class="docutils literal notranslate"><span class="pre">PatristicDistanceMatrix</span></code></a></li>
+<li><a class="reference internal" href="#dendropy.calculate.treemeasure.coalescence_ages"><code class="docutils literal notranslate"><span class="pre">coalescence_ages</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.colless_tree_imbalance"><code class="docutils literal notranslate"><span class="pre">colless_tree_imbalance</span></code></a></li>
+<li><a class="reference internal" href="#dendropy.calculate.treemeasure.divergence_times"><code class="docutils literal notranslate"><span class="pre">divergence_times</span></code></a></li>
+<li><a class="reference internal" href="#dendropy.calculate.treemeasure.node_ages"><code class="docutils literal notranslate"><span class="pre">node_ages</span></code></a></li>
+<li><a class="reference internal" href="#dendropy.calculate.treemeasure.node_depths"><code class="docutils literal notranslate"><span class="pre">node_depths</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.patristic_distance"><code class="docutils literal notranslate"><span class="pre">patristic_distance</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.pybus_harvey_gamma"><code class="docutils literal notranslate"><span class="pre">pybus_harvey_gamma</span></code></a></li>
 <li><a class="reference internal" href="#dendropy.calculate.treemeasure.sackin_index"><code class="docutils literal notranslate"><span class="pre">sackin_index</span></code></a></li>
@@ -253,7 +281,7 @@ internal branches.</p>
         <h3>Obtaining</h3>
         <ul>
             <li><a target="_blank" href="http://pypi.python.org/pypi/DendroPy">Install from the Python Package Index</a></li>
-            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.2.tar.gz">Download the Source Code Archive</a></li>
+            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.8.tar.gz">Download the Source Code Archive</a></li>
             <li><a target="_blank" href="http://github.com/jeetsukumaran/DendroPy">Clone the Source Code Repository</a></li>
         </ul>
     </div>
@@ -317,13 +345,13 @@ internal branches.</p>
         <li class="right" >
           <a href="treeshape.html" title="dendropy.model.treeshape: Models of Tree Shape"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.calculate.treemeasure</span></code>: Unary Tree Statistics and Metrics</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2009-2024, Jeet Sukumaran and Mark T. Holder.
+    &#169; Copyright 2009-2026, Jeet Sukumaran and Mark T. Holder.
     </div>
   </body>
 </html>

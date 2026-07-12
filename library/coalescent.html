@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>dendropy.model.coalescent: The Coalescent &#8212; DendroPy 5.0.2 documentation</title>
+    <title>dendropy.model.coalescent: The Coalescent &#8212; DendroPy 5.0.8 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/rtd.css?v=cedc6a2f" />
     
-    <script src="../_static/documentation_options.js?v=5df4c8d1"></script>
+    <script src="../_static/documentation_options.js?v=ede7f5ad"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="birthdeath.html" title="dendropy.model.birthdeath: The Birth-Death and Related Processes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.model.coalescent</span></code>: The Coalescent</a></li> 
       </ul>
@@ -90,7 +90,7 @@ generations for a haploid population of size N. Otherwise time is in
 generations.</p></li>
 <li><p><strong>rng</strong> (<code class="docutils literal notranslate"><span class="pre">Random</span></code> object) – The random number generator instance to use. If not specified, the
 default RNG will be used.</p></li>
-<li><p><strong>use_expected_tmrca</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then instead of random times, the <em>expected</em> times will be
+<li><p><strong>use_expected_tmrca</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then instead of random times, the <em>expected</em> times will be
 used.</p></li>
 </ul>
 </dd>
@@ -269,7 +269,7 @@ between this coalescence event and the earlier (more recent) one.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tree</strong> (<a class="reference internal" href="treemodel.html#dendropy.datamodel.treemodel.Tree" title="dendropy.datamodel.treemodel.Tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tree</span></code></a>) – A tree instance.</p></li>
-<li><p><strong>ultrametricity_precision</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – When calculating the node ages, an error will be raised if the tree is
+<li><p><strong>ultrametricity_precision</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – When calculating the node ages, an error will be raised if the tree is
 not ultrametric. This error may be due to floating-point or numerical
 imprecision. You can set the precision of the ultrametricity validation
 by setting the <code class="docutils literal notranslate"><span class="pre">ultrametricity_precision</span></code> parameter. E.g., use
@@ -327,7 +327,7 @@ this coalescence event and the earlier (more recent) one.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tree</strong> (<a class="reference internal" href="treemodel.html#dendropy.datamodel.treemodel.Tree" title="dendropy.datamodel.treemodel.Tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tree</span></code></a>) – A tree instance.</p></li>
-<li><p><strong>ultrametricity_precision</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – When calculating the node ages, an error will be raised if the tree is
+<li><p><strong>ultrametricity_precision</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – When calculating the node ages, an error will be raised if the tree is
 not ultrametric. This error may be due to floating-point or numerical
 imprecision. You can set the precision of the ultrametricity validation
 by setting the <code class="docutils literal notranslate"><span class="pre">ultrametricity_precision</span></code> parameter. E.g., use
@@ -369,7 +369,7 @@ sampled.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_leaves</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Number of individuals/genes sampled.</p></li>
+<li><p><strong>num_leaves</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of individuals/genes sampled.</p></li>
 <li><p><strong>pop_size</strong> (<em>numeric</em>) – The size of the population from the which the coalescent process is
 sampled.</p></li>
 </ul>
@@ -512,7 +512,7 @@ population of <code class="docutils literal notranslate"><span class="pre">pop_s
         <h3>Obtaining</h3>
         <ul>
             <li><a target="_blank" href="http://pypi.python.org/pypi/DendroPy">Install from the Python Package Index</a></li>
-            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.2.tar.gz">Download the Source Code Archive</a></li>
+            <li><a target="_blank" href="http://pypi.python.org/packages/source/D/DendroPy/DendroPy-5.0.8.tar.gz">Download the Source Code Archive</a></li>
             <li><a target="_blank" href="http://github.com/jeetsukumaran/DendroPy">Clone the Source Code Repository</a></li>
         </ul>
     </div>
@@ -576,13 +576,13 @@ population of <code class="docutils literal notranslate"><span class="pre">pop_s
         <li class="right" >
           <a href="birthdeath.html" title="dendropy.model.birthdeath: The Birth-Death and Related Processes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">DendroPy 5.0.8 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >DendroPy Library Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">dendropy.model.coalescent</span></code>: The Coalescent</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright 2009-2024, Jeet Sukumaran and Mark T. Holder.
+    &#169; Copyright 2009-2026, Jeet Sukumaran and Mark T. Holder.
     </div>
   </body>
 </html>
