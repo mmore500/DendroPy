@@ -701,6 +701,59 @@ def parse_comment_metadata_beast2_v2_7_8(
         metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
     return metadata
 
+##############################################################################
+## Grammar for BEAST2 v2.7.8-style "[&key=value,...]" comment metadata,
+## mirroring BEAST2's own ANTLR grammar (NewickParser.g4/NewickLexer.g4)
+## as hand-reimplemented in _Beast2V2_7_8_AttribTokenizer above. This is
+## the source grammar for the generated, self-contained (no "lark"
+## import) standalone parser module _beast2_v2_7_8_lark_standalone.py,
+## imported lazily below; it is documentation only, not itself
+## parsed/executed at runtime.
+##
+## To regenerate that module from this grammar (requires the
+## third-party "lark" package -- not a DendroPy runtime dependency),
+## save the grammar below (between the "-----" markers) to a file and
+## run:
+##
+##     python -m lark.tools.standalone -l basic \
+##         <saved-grammar-file> \
+##         > src/dendropy/dataio/_beast2_v2_7_8_lark_standalone.py
+##
+## The "basic" (non-contextual) lexer is required, rather than the LALR
+## default of "contextual": it is what makes a purely-numeric token lex
+## as NUMBER (rather than ASTRING) regardless of grammar position,
+## matching the context-free lexing of BEAST2's own ANTLR grammar and so
+## correctly rejecting numeric-only attribute keys (e.g. "&123=5").
+##
+## -----------------------------------------------------------------------
+## start: attribs
+##
+## attribs: attrib ("," attrib)*
+##        |
+##
+## attrib: key "=" value
+##
+## key: ASTRING  -> key
+##    | DQSTRING -> key
+##    | SQSTRING -> key
+##
+## ?value: NUMBER   -> number
+##       | DQSTRING -> dqstring
+##       | SQSTRING -> sqstring
+##       | ASTRING  -> string
+##       | vector
+##
+## vector: "{" value ("," value)* "}"
+##
+## NUMBER.2: /-?(?:(?:0|[1-9]\d*)?\.\d+|(?:0|[1-9]\d*)(?:\.\d*)?)(?:[eE]-?\d+)?/
+## ASTRING.1: /[a-zA-Z0-9|#*%\/.\-+_&:]+/
+## DQSTRING: /"[^"]*"/
+## SQSTRING: /'[^']*'/
+##
+## %ignore /[ \t\r\n]+/
+## -----------------------------------------------------------------------
+##############################################################################
+
 @functools.lru_cache(maxsize=None)
 def _beast2_v2_7_8_lark_parser_and_transformer():
     # imported lazily so that the (large, generated) standalone parser
@@ -747,17 +800,17 @@ def parse_comment_metadata_beast2_v2_7_8_lark(
     """
     Equivalent to ``parse_comment_metadata_beast2_v2_7_8``, but implemented
     as a grammar-driven LALR(1) parser generated (via Lark's "Standalone
-    Mode") from the grammar at
-    ``dev/grammars/beast2_v2_7_8_comment_metadata.lark``, rather than by
+    Mode") from the grammar documented in a comment above
+    ``_beast2_v2_7_8_lark_parser_and_transformer``, rather than by
     hand-rolled recursive descent. Included to demonstrate that approach;
     ``parse_comment_metadata_beast2_v2_7_8`` remains the parser actually
     used by default.
 
     The generated parser module
     (``dendropy.dataio._beast2_v2_7_8_lark_standalone``, imported lazily
-    on first call, regenerated via ``dev/generate_beast2_lark_parser.py``)
-    is licensed separately from the rest of DendroPy, under the Mozilla
-    Public License, v. 2.0; see item 5 of "NOTICES.rst".
+    on first call) is licensed separately from the rest of DendroPy,
+    under the Mozilla Public License, v. 2.0; see item 5 of
+    "NOTICES.rst".
 
     Parameters
     ----------

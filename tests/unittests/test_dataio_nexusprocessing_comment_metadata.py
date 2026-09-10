@@ -247,9 +247,9 @@ class Beast2V2_7_8LarkCommentMetadataParsingTestCase(Beast2V2_7_8CommentMetadata
     against ``parse_comment_metadata_beast2_v2_7_8_lark`` -- a
     grammar-driven reimplementation of the same BEAST2 v2.7.8 comment
     metadata format, generated (via Lark's Standalone Mode) from the
-    grammar at ``dev/grammars/beast2_v2_7_8_comment_metadata.lark`` --
-    to confirm it agrees with the hand-rolled recursive-descent parser
-    on every case, error handling included.
+    grammar documented in ``nexusprocessing.py`` -- to confirm it agrees
+    with the hand-rolled recursive-descent parser on every case, error
+    handling included.
     """
 
     PARSE_FN = staticmethod(nexusprocessing.parse_comment_metadata_beast2_v2_7_8_lark)

@@ -43,10 +43,12 @@
     to track provenance.
 
 5.  ``src/dendropy/dataio/_beast2_v2_7_8_lark_standalone.py`` is a generated
-    parser module, produced from the grammar at
-    ``dev/grammars/beast2_v2_7_8_comment_metadata.lark`` using the
-    third-party `Lark <https://github.com/lark-parser/lark>`_ package's
-    "Standalone Mode" code generator (``dev/generate_beast2_lark_parser.py``).
+    parser module, produced using the third-party
+    `Lark <https://github.com/lark-parser/lark>`_ package's "Standalone
+    Mode" code generator from the grammar documented in a comment in
+    ``src/dendropy/dataio/nexusprocessing.py`` (above
+    ``_beast2_v2_7_8_lark_parser_and_transformer``), which also gives the
+    exact regeneration command.
     Unlike the rest of DendroPy (BSD-licensed; see "LICENSE.rst") and unlike
     Lark itself (MIT-licensed), this generated file is separately licensed,
     per the notice embedded in Lark's own generator tool, under the
