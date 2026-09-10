@@ -47,7 +47,7 @@
     `Lark <https://github.com/lark-parser/lark>`_ package's "Standalone
     Mode" code generator from the grammar documented in a comment in
     ``src/dendropy/dataio/nexusprocessing.py`` (above
-    ``_beast2_v2_7_8_lark_parser_and_transformer``), which also gives the
+    ``parse_comment_metadata_beast2_v2_7_8``), which also gives the
     exact regeneration command.
     Unlike the rest of DendroPy (BSD-licensed; see "LICENSE.rst") and unlike
     Lark itself (MIT-licensed), this generated file is separately licensed,

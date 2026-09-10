@@ -484,231 +484,13 @@ def parse_comment_metadata_to_annotations(
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
-## Re-implements the ANTLR grammar from
-## ``beast.base.evolution.tree.treeparser.NewickParser``/``NewickLexer``
-## (github.com/CompEvol/beast2, tag "v2.7.8").
-##
-## Materialization (from ``TreeParser.processMetadata()``): a top-level
-## vector is a list of ``float`` only if every direct element's raw text
-## parses as a number; otherwise every element's raw text is used
-## unparsed (nested vector elements are not recursively materialized).
-
-@functools.lru_cache(maxsize=None)
-def _beast2_v2_7_8_patterns():
-    # compiled lazily (on first use) rather than at module load
-    nnint = r"(?:0|[1-9]\d*)"
-    number = r"-?(?:" + nnint + r"?\.\d+|" + nnint + r"(?:\.\d*)?)(?:[eE]-?\d+)?"
-    return {
-            "number": re.compile(number),
-            "unquoted_string": re.compile(r"[a-zA-Z0-9|#*%/.\-+_&:]+"),
-            "dquoted_string": re.compile(r'"[^"]*"'),
-            "squoted_string": re.compile(r"'[^']*'"),
-            "whitespace": re.compile(r"[ \t\r\n]+"),
-            }
-
-class _Beast2V2_7_8_ValueNode(object):
-    """
-    A parsed BEAST2-grammar ``attribValue``: either a number or (quoted
-    or unquoted) string leaf, or a vector of child ``attribValue`` nodes.
-    ``raw`` is the exact "significant" (whitespace-free) source text of
-    the node, matching what an ANTLR ``ParserRuleContext.getText()`` call
-    would return.
-    """
-
-    __slots__ = ("kind", "raw", "elements")
-
-    def __init__(self, kind, raw, elements=None):
-        self.kind = kind
-        self.raw = raw
-        self.elements = elements
-
-class _Beast2V2_7_8_AttribTokenizer(object):
-
-    def __init__(self, text):
-        self.text = text
-        self.pos = 0
-        self.patterns = _beast2_v2_7_8_patterns()
-
-    def error(self, message):
-        raise ValueError(
-                "Malformed BEAST2-style metadata comment at position {}"
-                " (near '{}'): {}".format(
-                    self.pos, self.text[self.pos:self.pos + 16], message))
-
-    def skip_whitespace(self):
-        match = self.patterns["whitespace"].match(self.text, self.pos)
-        if match:
-            self.pos = match.end()
-
-    def peek_char(self):
-        return self.text[self.pos] if self.pos < len(self.text) else ""
-
-    def _match_quoted(self, quote_char):
-        pattern = (self.patterns["dquoted_string"] if quote_char == '"'
-                else self.patterns["squoted_string"])
-        match = pattern.match(self.text, self.pos)
-        if not match:
-            self.error("unterminated {}-quoted string".format(quote_char))
-        self.pos = match.end()
-        return match.group(0)
-
-    def match_key(self):
-        self.skip_whitespace()
-        char = self.peek_char()
-        if char in ("'", '"'):
-            return self._match_quoted(char)[1:-1]
-        match = self.patterns["unquoted_string"].match(self.text, self.pos)
-        if not match:
-            self.error("expected attribute key")
-        number_match = self.patterns["number"].match(self.text, self.pos)
-        if number_match and number_match.end() == match.end():
-            self.error("numeric literal cannot be used as an attribute key")
-        self.pos = match.end()
-        return match.group(0)
-
-    def match_value(self):
-        self.skip_whitespace()
-        char = self.peek_char()
-        if char == "{":
-            return self.match_vector()
-        if char in ("'", '"'):
-            raw = self._match_quoted(char)
-            return _Beast2V2_7_8_ValueNode("string", raw)
-        number_match = self.patterns["number"].match(self.text, self.pos)
-        string_match = self.patterns["unquoted_string"].match(self.text, self.pos)
-        number_len = (number_match.end() - self.pos) if number_match else -1
-        string_len = (string_match.end() - self.pos) if string_match else -1
-        if number_len < 0 and string_len < 0:
-            self.error("expected attribute value")
-        if number_len >= string_len:
-            self.pos = number_match.end()
-            return _Beast2V2_7_8_ValueNode("number", number_match.group(0))
-        else:
-            self.pos = string_match.end()
-            return _Beast2V2_7_8_ValueNode("string", string_match.group(0))
-
-    def match_vector(self):
-        assert self.peek_char() == "{"
-        self.pos += 1
-        elements = [self.match_value()]
-        self.skip_whitespace()
-        while self.peek_char() == ",":
-            self.pos += 1
-            elements.append(self.match_value())
-            self.skip_whitespace()
-        if self.peek_char() != "}":
-            self.error("expected ',' or '}' in vector value")
-        self.pos += 1
-        raw = "{" + ",".join(element.raw for element in elements) + "}"
-        return _Beast2V2_7_8_ValueNode("vector", raw, elements=elements)
-
-    def match_attribs(self):
-        attribs = []
-        self.skip_whitespace()
-        if self.pos >= len(self.text):
-            return attribs
-        while True:
-            key = self.match_key()
-            self.skip_whitespace()
-            if self.peek_char() != "=":
-                self.error("expected '=' after attribute key '{}'".format(key))
-            self.pos += 1
-            value = self.match_value()
-            attribs.append((key, value))
-            self.skip_whitespace()
-            if self.peek_char() == ",":
-                self.pos += 1
-                self.skip_whitespace()
-                continue
-            break
-        if self.pos != len(self.text):
-            self.error("unexpected trailing content")
-        return attribs
-
-def _beast2_v2_7_8_materialize_value(value_node):
-    if value_node.kind == "number":
-        return float(value_node.raw)
-    if value_node.kind == "string":
-        raw = value_node.raw
-        return raw[1:-1] if raw[:1] in ("'", '"') else raw
-    # value_node.kind == "vector"
-    try:
-        return [float(element.raw) for element in value_node.elements]
-    except ValueError:
-        return [element.raw for element in value_node.elements]
-
-def parse_comment_metadata_beast2_v2_7_8(
-        comment,
-        strip_leading_trailing_spaces=True):
-    """
-    Returns a dictionary of field name to value pairs parsed out of a
-    "[&key=value,...]"-style comment, parsed to match the behavior of
-    BEAST2 v2.7.8 (``TreeParser``), including correct support for
-    arbitrarily-nested list ("vector") values, e.g.
-    ``history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}``.
-
-    Suitable for use as (or wrapped by) the ``extract_comment_metadata``
-    argument of |NewickReader|/|NexusReader| to correctly parse trees
-    with this style of metadata comment.
-
-    Parameters
-    ----------
-    ``comment`` : string
-        A comment token.
-    ``strip_leading_trailing_spaces`` : boolean
-        Remove whitespace from comments.
-
-    Returns
-    -------
-    metadata : dict
-        Dictionary of field name to (parsed) value.
-
-    Raises
-    ------
-    ``ValueError``
-        If ``comment`` is not well-formed according to the BEAST2
-        v2.7.8 metadata comment grammar (note this differs from the
-        other parsers in this module, which silently skip malformed
-        input).
-
-    See Also
-    --------
-    parse_comment_metadata_dendropy_v5_0_0
-    """
-    metadata = {}
-    if comment.startswith("&&"):
-        body = comment[2:]
-    elif comment.startswith("&"):
-        body = comment[1:]
-    else:
-        # unrecognized metadata pattern
-        return metadata
-    if strip_leading_trailing_spaces:
-        body = body.strip()
-    if not body:
-        return metadata
-    tokenizer = _Beast2V2_7_8_AttribTokenizer(body)
-    try:
-        attribs = tokenizer.match_attribs()
-    except RecursionError:
-        # pathologically deep vector nesting
-        raise ValueError(
-                "Malformed BEAST2-style metadata comment: vector nesting"
-                " is too deep to parse")
-    for key, value_node in attribs:
-        if strip_leading_trailing_spaces:
-            key = key.strip()
-        metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
-    return metadata
-
-##############################################################################
 ## Grammar for BEAST2 v2.7.8-style "[&key=value,...]" comment metadata,
-## mirroring BEAST2's own ANTLR grammar (NewickParser.g4/NewickLexer.g4)
-## as hand-reimplemented in _Beast2V2_7_8_AttribTokenizer above. This is
-## the source grammar for the generated, self-contained (no "lark"
-## import) standalone parser module _beast2_v2_7_8_lark_standalone.py,
-## imported lazily below; it is documentation only, not itself
-## parsed/executed at runtime.
+## mirroring BEAST2's own ANTLR grammar (NewickParser.g4/NewickLexer.g4,
+## github.com/CompEvol/beast2, tag "v2.7.8"). This is the source grammar
+## for the generated, self-contained (no "lark" import) standalone
+## parser module _beast2_v2_7_8_lark_standalone.py, imported lazily
+## below; it is documentation only, not itself parsed/executed at
+## runtime.
 ##
 ## To regenerate that module from this grammar (requires the
 ## third-party "lark" package -- not a DendroPy runtime dependency),
@@ -752,10 +534,41 @@ def parse_comment_metadata_beast2_v2_7_8(
 ##
 ## %ignore /[ \t\r\n]+/
 ## -----------------------------------------------------------------------
-##############################################################################
+##
+## Materialization (from ``TreeParser.processMetadata()``): a top-level
+## vector is a list of ``float`` only if every direct element's raw text
+## parses as a number; otherwise every element's raw text is used
+## unparsed (nested vector elements are not recursively materialized).
+
+class _Beast2V2_7_8_ValueNode(object):
+    """
+    A parsed BEAST2-grammar ``attribValue``: either a number or (quoted
+    or unquoted) string leaf, or a vector of child ``attribValue`` nodes.
+    ``raw`` is the exact "significant" (whitespace-free) source text of
+    the node.
+    """
+
+    __slots__ = ("kind", "raw", "elements")
+
+    def __init__(self, kind, raw, elements=None):
+        self.kind = kind
+        self.raw = raw
+        self.elements = elements
+
+def _beast2_v2_7_8_materialize_value(value_node):
+    if value_node.kind == "number":
+        return float(value_node.raw)
+    if value_node.kind == "string":
+        raw = value_node.raw
+        return raw[1:-1] if raw[:1] in ("'", '"') else raw
+    # value_node.kind == "vector"
+    try:
+        return [float(element.raw) for element in value_node.elements]
+    except ValueError:
+        return [element.raw for element in value_node.elements]
 
 @functools.lru_cache(maxsize=None)
-def _beast2_v2_7_8_lark_parser_and_transformer():
+def _beast2_v2_7_8_parser_and_transformer():
     # imported lazily so that the (large, generated) standalone parser
     # module is only ever loaded if this parser is actually used
     from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
@@ -794,23 +607,27 @@ def _beast2_v2_7_8_lark_parser_and_transformer():
 
     return standalone, standalone.Lark_StandAlone(), _ToValueNode()
 
-def parse_comment_metadata_beast2_v2_7_8_lark(
+def parse_comment_metadata_beast2_v2_7_8(
         comment,
         strip_leading_trailing_spaces=True):
     """
-    Equivalent to ``parse_comment_metadata_beast2_v2_7_8``, but implemented
-    as a grammar-driven LALR(1) parser generated (via Lark's "Standalone
-    Mode") from the grammar documented in a comment above
-    ``_beast2_v2_7_8_lark_parser_and_transformer``, rather than by
-    hand-rolled recursive descent. Included to demonstrate that approach;
-    ``parse_comment_metadata_beast2_v2_7_8`` remains the parser actually
-    used by default.
+    Returns a dictionary of field name to value pairs parsed out of a
+    "[&key=value,...]"-style comment, parsed to match the behavior of
+    BEAST2 v2.7.8 (``TreeParser``), including correct support for
+    arbitrarily-nested list ("vector") values, e.g.
+    ``history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}``.
 
-    The generated parser module
+    Implemented as a grammar-driven LALR(1) parser, generated (via
+    Lark's "Standalone Mode") from the grammar documented in the
+    module-level comment above. The generated parser module
     (``dendropy.dataio._beast2_v2_7_8_lark_standalone``, imported lazily
     on first call) is licensed separately from the rest of DendroPy,
     under the Mozilla Public License, v. 2.0; see item 5 of
     "NOTICES.rst".
+
+    Suitable for use as (or wrapped by) the ``extract_comment_metadata``
+    argument of |NewickReader|/|NexusReader| to correctly parse trees
+    with this style of metadata comment.
 
     Parameters
     ----------
@@ -828,11 +645,13 @@ def parse_comment_metadata_beast2_v2_7_8_lark(
     ------
     ``ValueError``
         If ``comment`` is not well-formed according to the BEAST2
-        v2.7.8 metadata comment grammar.
+        v2.7.8 metadata comment grammar (note this differs from the
+        other parsers in this module, which silently skip malformed
+        input).
 
     See Also
     --------
-    parse_comment_metadata_beast2_v2_7_8
+    parse_comment_metadata_dendropy_v5_0_0
     """
     metadata = {}
     if comment.startswith("&&"):
@@ -846,7 +665,7 @@ def parse_comment_metadata_beast2_v2_7_8_lark(
         body = body.strip()
     if not body:
         return metadata
-    standalone, parser, transformer = _beast2_v2_7_8_lark_parser_and_transformer()
+    standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
         tree = parser.parse(body)
     except standalone.UnexpectedInput as e:
