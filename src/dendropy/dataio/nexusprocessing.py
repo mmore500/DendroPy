@@ -434,9 +434,7 @@ def parse_comment_metadata_to_annotations(
 
     This is a convenience wrapper, retained for backward compatibility,
     around :func:`parse_comment_metadata_dendropy_v5_0_0` and
-    :func:`comment_metadata_to_annotations` (the latter is the general
-    dict-to-|Annotation| conversion used for every parser in this
-    module, not just this one).
+    :func:`comment_metadata_to_annotations`.
 
     Parameters
     ----------
@@ -601,10 +599,8 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     Parameters
     ----------
     ``comment`` : string
-        A comment token. Whitespace is insignificant except where
-        quoted, so -- unlike
-        :func:`parse_comment_metadata_dendropy_v5_0_0` -- no
-        whitespace-stripping option is needed.
+        A comment token. Whitespace is insignificant except within
+        quoted strings.
 
     Returns
     -------

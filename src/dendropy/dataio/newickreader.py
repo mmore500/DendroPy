@@ -156,8 +156,7 @@ class NewickReader(ioservice.DataReader):
             A callable may be given instead: it will be called with a
             single comment token string and must return a ``dict``
             mapping field name to value, which is then converted into
-            |Annotation| objects. This allows substituting a different
-            comment metadata parser.
+            |Annotation| objects.
         store_tree_weights : boolean, default: |False|
             If |True|, process the tree weight (e.g. "[&W 1/2]") comment
             associated with each tree, if any. Defaults to |False|.

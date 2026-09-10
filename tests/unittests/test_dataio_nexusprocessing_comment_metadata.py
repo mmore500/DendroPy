@@ -21,8 +21,8 @@
 """
 Tests for comment metadata extraction (``dendropy.dataio.nexusprocessing``),
 including support for a callable ``extract_comment_metadata`` argument and
-the BEAST2-version-specific parser added to address main fork issue #145
-(https://github.com/jeetsukumaran/DendroPy/issues/145): DendroPy's original
+the BEAST2-version-specific parser added to address
+https://github.com/jeetsukumaran/DendroPy/issues/145: DendroPy's original
 comment metadata parser mis-parses nested list-valued ("vector")
 annotations, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
 """
@@ -48,7 +48,7 @@ REAL_MCC_TREE_EXAMPLE_COMMENT = (
         'rate=0.007334968720519001'
         )
 
-# The nested-list annotation from main fork issue #145.
+# The nested-list annotation from issue #145.
 ISSUE_145_COMMENT = "&history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}"
 
 
@@ -259,7 +259,7 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
     """
     End-to-end tests confirming that a callable ``extract_comment_metadata``
     is honored by the tree readers (for both NEWICK and NEXUS schemas),
-    and that using the BEAST2-style parser resolves main fork issue #145.
+    and that using the BEAST2-style parser resolves issue #145.
     """
 
     NEWICK_STR = (
