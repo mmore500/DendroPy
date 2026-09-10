@@ -52,6 +52,10 @@ REAL_MCC_TREE_EXAMPLE_COMMENT = (
 ISSUE_145_COMMENT = "&history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}"
 
 
+def annotations_as_dict(annotations):
+    return {a.name: a.value for a in annotations}
+
+
 class DendroPyV5_0_0CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     """
     ``parse_comment_metadata_dendropy_v5_0_0`` is DendroPy's original
@@ -111,29 +115,27 @@ class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.Exten
     signature and Annotation-set-returning behavior.
     """
 
-    def _as_dict(self, annotations):
-        return {a.name: a.value for a in annotations}
-
     def test_basic(self):
         annotations = nexusprocessing.parse_comment_metadata_to_annotations("&rate=0.5")
-        self.assertEqual(self._as_dict(annotations), {"rate": "0.5"})
+        self.assertEqual(annotations_as_dict(annotations), {"rate": "0.5"})
 
     def test_field_name_map(self):
         annotations = nexusprocessing.parse_comment_metadata_to_annotations(
                 "&rate=0.5", field_name_map={"rate": "substitution_rate"})
-        self.assertEqual(self._as_dict(annotations), {"substitution_rate": "0.5"})
+        self.assertEqual(
+                annotations_as_dict(annotations), {"substitution_rate": "0.5"})
 
     def test_field_value_types_on_vector(self):
         annotations = nexusprocessing.parse_comment_metadata_to_annotations(
                 "&x={1,2,3}", field_value_types={"x": int})
-        self.assertEqual(self._as_dict(annotations), {"x": [1, 2, 3]})
+        self.assertEqual(annotations_as_dict(annotations), {"x": [1, 2, 3]})
 
     def test_accumulates_into_existing_set(self):
         existing = nexusprocessing.parse_comment_metadata_to_annotations("&a=1")
         combined = nexusprocessing.parse_comment_metadata_to_annotations(
                 "&b=2", annotations=existing)
         self.assertIs(combined, existing)
-        self.assertEqual(self._as_dict(combined), {"a": "1", "b": "2"})
+        self.assertEqual(annotations_as_dict(combined), {"a": "1", "b": "2"})
 
 
 class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
@@ -186,6 +188,10 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
                 "& rate = 0.5 , hpd = { 1.1 , 2.2 } ")
         self.assertEqual(d, {"rate": 0.5, "hpd": [1.1, 2.2]})
 
+    def test_quoting_protects_whitespace(self):
+        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&" a key "=1')
+        self.assertEqual(d, {" a key ": 1.0})
+
     def test_empty_comment_returns_empty(self):
         self.assertEqual(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&"), {})
 
@@ -212,7 +218,6 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&123=5")
 
     def test_real_mcc_tree_example_comment(self):
-        # exercised against realistic (non-nested) MCC-tree metadata
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 REAL_MCC_TREE_EXAMPLE_COMMENT)
         self.assertEqual(d["state"], "D")
@@ -225,25 +230,24 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 
 class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
 
-    def _as_dict(self, annotations):
-        return {a.name: a.value for a in annotations}
-
     def test_basic(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
                 {"rate": 0.5, "label": "x"})
-        self.assertEqual(self._as_dict(annotations), {"rate": 0.5, "label": "x"})
+        self.assertEqual(
+                annotations_as_dict(annotations), {"rate": 0.5, "label": "x"})
 
     def test_field_name_map(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
                 {"rate": 0.5}, field_name_map={"rate": "substitution_rate"})
-        self.assertEqual(self._as_dict(annotations), {"substitution_rate": 0.5})
+        self.assertEqual(
+                annotations_as_dict(annotations), {"substitution_rate": 0.5})
 
     def test_field_value_types_scalar_and_list(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
                 {"rate": 5, "hpd": [1, 2, 3]},
                 field_value_types={"rate": float, "hpd": float})
         self.assertEqual(
-                self._as_dict(annotations),
+                annotations_as_dict(annotations),
                 {"rate": 5.0, "hpd": [1.0, 2.0, 3.0]})
 
     def test_empty_dict_yields_no_annotations(self):

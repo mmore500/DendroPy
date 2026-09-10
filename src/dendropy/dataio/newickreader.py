@@ -421,11 +421,11 @@ class NewickReader(ioservice.DataReader):
         rooting_token_found = False
         weighting_token_found = False
         if callable(self.extract_comment_metadata):
-            comment_metadata_parse_fn = self.extract_comment_metadata
+            parse_fn = self.extract_comment_metadata
         elif self.extract_comment_metadata:
-            comment_metadata_parse_fn = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
+            parse_fn = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
         else:
-            comment_metadata_parse_fn = None
+            parse_fn = None
         for comment in tree_comments:
             stripped_comment = comment.strip()
             if stripped_comment in ["&u", "&U", "&r", "&R"]:
@@ -462,8 +462,8 @@ class NewickReader(ioservice.DataReader):
                     exc.__context__ = None # Python 3.0, 3.1, 3.2
                     exc.__cause__ = None # Python 3.3, 3.4
                     raise exc
-            elif comment_metadata_parse_fn is not None and comment.startswith("&"):
-                metadata = comment_metadata_parse_fn(comment)
+            elif parse_fn is not None and comment.startswith("&"):
+                metadata = parse_fn(comment)
                 if metadata:
                     tree.annotations.update(
                             nexusprocessing.comment_metadata_to_annotations(metadata))

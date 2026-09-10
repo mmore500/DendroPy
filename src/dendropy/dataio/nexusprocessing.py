@@ -586,9 +586,7 @@ def _beast2_v2_7_8_parser_and_transformer():
 
     return standalone, standalone.Lark_StandAlone(), _ToValueNode()
 
-def parse_comment_metadata_beast2_v2_7_8(
-        comment,
-        strip_leading_trailing_spaces=True):
+def parse_comment_metadata_beast2_v2_7_8(comment):
     """
     Returns a dictionary of field name to value pairs parsed out of a
     "[&key=value,...]"-style comment, parsed to match the behavior of
@@ -603,9 +601,10 @@ def parse_comment_metadata_beast2_v2_7_8(
     Parameters
     ----------
     ``comment`` : string
-        A comment token.
-    ``strip_leading_trailing_spaces`` : boolean
-        Remove whitespace from comments.
+        A comment token. Whitespace is insignificant except where
+        quoted, so -- unlike
+        :func:`parse_comment_metadata_dendropy_v5_0_0` -- no
+        whitespace-stripping option is needed.
 
     Returns
     -------
@@ -632,24 +631,18 @@ def parse_comment_metadata_beast2_v2_7_8(
     else:
         # unrecognized metadata pattern
         return metadata
-    if strip_leading_trailing_spaces:
-        body = body.strip()
-    if not body:
-        return metadata
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
         tree = parser.parse(body)
     except standalone.UnexpectedInput as e:
         raise ValueError(
-                "Malformed BEAST2-style metadata comment: {}".format(e))
-    except RecursionError:
+                "Malformed BEAST2-style metadata comment: {}".format(e)) from e
+    except RecursionError as e:
         # pathologically deep vector nesting
         raise ValueError(
                 "Malformed BEAST2-style metadata comment: vector nesting"
-                " is too deep to parse")
+                " is too deep to parse") from e
     for key, value_node in transformer.transform(tree):
-        if strip_leading_trailing_spaces:
-            key = key.strip()
         metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
     return metadata
 
