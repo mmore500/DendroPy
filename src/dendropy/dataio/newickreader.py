@@ -147,26 +147,19 @@ class NewickReader(ioservice.DataReader):
             If |True| (default), any comments that begin with '&' or '&&' will
             be parsed and stored as part of the annotation set of the
             corresponding object (accessible through the ``annotations``
-            attribute of the object). This requires that the comment
-            contents conform to a particular format (NHX or BEAST: 'field =
-            value'), as implemented by
-            :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0`.
-            If |False|, then the comments will not be parsed,
-            but will be instead stored directly as elements of the ``comments``
-            list attribute of the associated object.
-            If a callable is given instead of a boolean, it will be used
-            in place of the default parsing function: it will be called
-            with a single comment token string as its argument, and is
-            expected to return a ``dict`` mapping field name to value
-            (which will then be converted into |Annotation| objects via
-            :func:`dendropy.dataio.nexusprocessing.comment_metadata_to_annotations`).
-            This allows for substituting alternative comment metadata
-            parsing logic, e.g. one of the
+            attribute of the object), using
+            :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0`
+            (see its docstring for the comment format and known
+            limitations). If |False|, then the comments will not be
+            parsed, but will be instead stored directly as elements of
+            the ``comments`` list attribute of the associated object.
+            A callable may be given instead: it will be called with a
+            single comment token string and must return a ``dict``
+            mapping field name to value, which is then converted into
+            |Annotation| objects. This allows substituting a different
+            comment metadata parser, such as one of the other
             ``dendropy.dataio.nexusprocessing.parse_comment_metadata_<suffix>``
-            functions that faithfully reproduce the comment metadata
-            idiom of a particular tool (such as FigTree or BEAST2),
-            including, unlike the default parser, correct support for
-            arbitrarily-nested list-valued annotations.
+            functions.
         store_tree_weights : boolean, default: |False|
             If |True|, process the tree weight (e.g. "[&W 1/2]") comment
             associated with each tree, if any. Defaults to |False|.
@@ -423,8 +416,12 @@ class NewickReader(ioservice.DataReader):
             return
         rooting_token_found = False
         weighting_token_found = False
-        comment_metadata_parse_fn = nexusprocessing.get_comment_metadata_extraction_fn(
-                self.extract_comment_metadata)
+        if callable(self.extract_comment_metadata):
+            comment_metadata_parse_fn = self.extract_comment_metadata
+        elif self.extract_comment_metadata:
+            comment_metadata_parse_fn = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
+        else:
+            comment_metadata_parse_fn = None
         for comment in tree_comments:
             stripped_comment = comment.strip()
             if stripped_comment in ["&u", "&U", "&r", "&R"]:

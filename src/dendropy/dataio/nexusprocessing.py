@@ -280,26 +280,15 @@ class NexusTaxonSymbolMapper(object):
 ###############################################################################
 ## Metadata
 ##
-## Comment metadata "extraction" is factored into two steps:
-##
-##   1.  A "parse" function, ``parse_comment_metadata_<suffix>(comment)``,
-##       that takes a raw comment token (e.g. ``"&rate=0.1,x={1,2}"``) and
-##       returns a plain ``dict`` mapping field name to (natively-typed)
-##       value. This is the piece that differs between the comment
-##       metadata idioms of different tools/versions.
-##   2.  :func:`comment_metadata_to_annotations`, which takes such a
-##       ``dict`` and converts it into a ``set`` of |Annotation| objects
-##       (optionally renaming fields and/or coercing value types along
-##       the way). This piece is common to all of the parsers below, and
-##       is applied by the calling code (:func:`process_comments_for_item`
-##       and, for tree-level comments, |NewickReader|).
-##
-## The ``extract_comment_metadata`` keyword argument accepted by
-## |NewickReader|/|NexusReader| may be a callable; if so, it is expected
-## to conform to the "parse" function contract above (comment string in,
-## ``dict`` out), so that any of the ``parse_comment_metadata_<suffix>``
-## functions below may be used directly as its value. See
-## :func:`get_comment_metadata_extraction_fn`.
+## Each ``parse_comment_metadata_<suffix>(comment)`` function parses a
+## raw comment token into a plain ``dict`` of field name to value; the
+## suffix identifies the comment metadata idiom (tool/version) it
+## implements. :func:`comment_metadata_to_annotations` converts such a
+## ``dict`` into |Annotation| objects, and is used for this by both
+## :func:`process_comments_for_item` and |NewickReader| (for tree-level
+## comments). ``extract_comment_metadata``, as accepted by
+## |NewickReader|/|NexusReader|, may be set to any of these parse
+## functions.
 
 def comment_metadata_to_annotations(
         metadata,
@@ -374,14 +363,11 @@ def parse_comment_metadata_dendropy_v5_0_0(
     (New Hampshire Extended-style) comment, using the comment metadata
     parsing logic used by DendroPy up to (and including) v5.0.0.
 
-    Note that this parser only correctly handles list ("vector") values
-    that are *not* themselves nested: given, e.g.,
-    ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``, the enclosing
-    braces of the outer list are matched only up to the *first* closing
-    brace encountered, so the result is mis-parsed (see: `main fork
-    issue #145 <https://github.com/jeetsukumaran/DendroPy/issues/145>`_).
-    Use :func:`parse_comment_metadata_beast2_v2_7_8` (or a custom parser)
-    for correct nested-list support.
+    Known limitation: list ("vector") values that are themselves nested,
+    e.g. ``x={{1,2},{3,4}}``, are not handled correctly -- the outer
+    braces are matched only up to the first inner closing brace. See
+    :func:`parse_comment_metadata_beast2_v2_7_8` for correct nested-list
+    support.
 
     Parameters
     ----------
@@ -389,11 +375,9 @@ def parse_comment_metadata_dendropy_v5_0_0(
         A comment token.
     ``field_value_types`` : dict
         A dictionary mapping field names (as given in the comment
-        string) to the value type (e.g. {"node-age" : float}). Note
-        that, for fidelity with the original DendroPy parsing behavior,
-        this is applied only to list ("vector") values (element-wise)
-        and to otherwise-untyped (i.e., not quoted-string- or
-        boolean-valued) scalars.
+        string) to the value type (e.g. {"node-age" : float}). Applied
+        only to list ("vector") values (element-wise) and to
+        otherwise-untyped scalars.
     ``strip_leading_trailing_spaces`` : boolean
         Remove whitespace from comments.
 
@@ -401,6 +385,11 @@ def parse_comment_metadata_dendropy_v5_0_0(
     -------
     metadata : dict
         Dictionary of field name to (parsed) value.
+
+    See Also
+    --------
+    parse_comment_metadata_figtree_v1_4_4
+    parse_comment_metadata_beast2_v2_7_8
     """
     metadata = {}
     if field_value_types is None:
@@ -451,10 +440,10 @@ def parse_comment_metadata_to_annotations(
     given in comments.
 
     This is a convenience wrapper, retained for backward compatibility,
-    around :func:`parse_comment_metadata_dendropy_v5_0_0` (to parse the
-    comment into a dictionary of field name to value pairs) and
-    :func:`comment_metadata_to_annotations` (to convert this dictionary
-    into a set of |Annotation| objects).
+    around :func:`parse_comment_metadata_dendropy_v5_0_0` and
+    :func:`comment_metadata_to_annotations` (the latter is the general
+    dict-to-|Annotation| conversion used for every parser in this
+    module, not just this one).
 
     Parameters
     ----------
@@ -495,19 +484,13 @@ def parse_comment_metadata_to_annotations(
 ###############################################################################
 ## Metadata: FigTree v1.4.4 comment metadata idiom
 ##
-## FigTree (through v1.4.4) delegates comment metadata parsing to the JEBL
-## library's ``NexusImporter.parseMetaCommentPairs()``/``parseValue()``
-## methods. The behavior implemented below is reverse-engineered directly
-## from the bytecode of the ``jebl.evolution.io.NexusImporter`` class
-## bundled with the FigTree v1.4.4 release (github.com/rambaut/figtree,
-## tag "v1.4.4"). In particular, note that -- like
-## ``parse_comment_metadata_dendropy_v5_0_0`` above -- list ("vector")
-## values are *not* correctly handled when nested: the underlying regular
-## expression only matches up to the first unmatched "}", so a value such
-## as ``{{1,2},{3,4}}`` is mis-parsed. This is preserved here for fidelity
-## with FigTree's actual (buggy) behavior; use
-## :func:`parse_comment_metadata_beast2_v2_7_8` (or a custom parser) for
-## correct nested-list support.
+## Ported from JEBL's ``NexusImporter.parseMetaCommentPairs()``/
+## ``parseValue()``, at the commit bundled in the FigTree v1.4.4 release:
+## https://github.com/rambaut/jebl2/blob/c5d018e774ba7f62d6e8dadd8d30b631511908a9/src/jebl/evolution/io/NexusImporter.java
+## Known limitation (matches upstream): nested list ("vector") values,
+## e.g. ``{{1,2},{3,4}}``, are not parsed correctly. See
+## :func:`parse_comment_metadata_beast2_v2_7_8` for correct nested-list
+## support.
 
 FIGTREE_V1_4_4_COMMENT_PAIR_PATTERN = re.compile(
         r'("[^"]*"+|[^,=\s]+)\s*(=\s*(\{[^=}]*\}|"[^"]*"+|[^,]+))?')
@@ -547,14 +530,12 @@ def parse_comment_metadata_figtree_v1_4_4(
         strip_leading_trailing_spaces=True):
     """
     Returns a dictionary of field name to value pairs parsed out of a
-    "[&key=value,...]"-style comment, parsed to match the behavior of
-    FigTree v1.4.4 (as implemented by the bundled JEBL
-    ``NexusImporter``).
+    "[&key=value,...]"-style comment, matching the behavior of FigTree
+    v1.4.4's bundled JEBL ``NexusImporter`` -- including its
+    single-level-only handling of list ("vector") values.
 
     Suitable for use as (or wrapped by) the ``extract_comment_metadata``
-    argument of |NewickReader|/|NexusReader| when exact fidelity with
-    FigTree v1.4.4's comment metadata parsing -- including its
-    single-level-only handling of list ("vector") values -- is desired.
+    argument of |NewickReader|/|NexusReader|.
 
     Parameters
     ----------
@@ -567,6 +548,11 @@ def parse_comment_metadata_figtree_v1_4_4(
     -------
     metadata : dict
         Dictionary of field name to (parsed) value.
+
+    See Also
+    --------
+    parse_comment_metadata_dendropy_v5_0_0
+    parse_comment_metadata_beast2_v2_7_8
     """
     metadata = {}
     if comment.startswith("&&"):
@@ -770,8 +756,7 @@ def parse_comment_metadata_beast2_v2_7_8(
 
     Suitable for use as (or wrapped by) the ``extract_comment_metadata``
     argument of |NewickReader|/|NexusReader| to correctly parse trees
-    with this style of metadata comment (see: `main fork issue #145
-    <https://github.com/jeetsukumaran/DendroPy/issues/145>`_).
+    with this style of metadata comment.
 
     Parameters
     ----------
@@ -792,6 +777,11 @@ def parse_comment_metadata_beast2_v2_7_8(
         v2.7.8 metadata comment grammar (a :class:`ValueError` subclass;
         note this differs from the other parsers in this module, which
         silently skip malformed input).
+
+    See Also
+    --------
+    parse_comment_metadata_dendropy_v5_0_0
+    parse_comment_metadata_figtree_v1_4_4
     """
     metadata = {}
     if comment.startswith("&&"):
@@ -820,46 +810,20 @@ def parse_comment_metadata_beast2_v2_7_8(
         metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
     return metadata
 
-###############################################################################
-## Comment metadata extraction dispatch
-
-def get_comment_metadata_extraction_fn(extract_comment_metadata):
-    """
-    Normalizes an ``extract_comment_metadata`` keyword argument value (as
-    accepted by, e.g., |NewickReader| and |NexusReader|) to either |None|
-    (extraction disabled) or a callable ``fn(comment)`` that takes a
-    single comment token string and returns a ``dict`` mapping field
-    name to value (see :func:`comment_metadata_to_annotations` for
-    converting such a ``dict`` into |Annotation| objects).
-
-    ``extract_comment_metadata`` may be given as:
-
-        - a callable: used directly (and returned as-is) as the comment
-          metadata parsing function. This allows client code to
-          substitute custom comment metadata parsing logic for handling
-          comment idioms that :func:`parse_comment_metadata_dendropy_v5_0_0`
-          does not support, e.g., one of the other
-          ``parse_comment_metadata_<suffix>`` functions provided by this
-          module (which, unlike the default parser, correctly handle the
-          arbitrarily-nested list-valued annotations written by some
-          tools), or an entirely custom parser.
-        - |True|: :func:`parse_comment_metadata_dendropy_v5_0_0` is used.
-        - |False| (or any other non-callable, falsy value): |None| is
-          returned, indicating that comment metadata extraction should
-          not be performed.
-    """
-    if callable(extract_comment_metadata):
-        return extract_comment_metadata
-    if extract_comment_metadata:
-        return parse_comment_metadata_dendropy_v5_0_0
-    return None
-
 def process_comments_for_item(item,
         item_comments,
         extract_comment_metadata):
     if not item_comments or item is None:
         return
-    parse_fn = get_comment_metadata_extraction_fn(extract_comment_metadata)
+    # ``extract_comment_metadata``: a callable ``fn(comment) -> dict`` is
+    # used as-is; |True| uses the default parser; anything else disables
+    # extraction.
+    if callable(extract_comment_metadata):
+        parse_fn = extract_comment_metadata
+    elif extract_comment_metadata:
+        parse_fn = parse_comment_metadata_dendropy_v5_0_0
+    else:
+        parse_fn = None
     for comment in item_comments:
         if parse_fn is not None and comment.startswith("&"):
             metadata = parse_fn(comment)

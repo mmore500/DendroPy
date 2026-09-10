@@ -329,27 +329,6 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(len(annotations), 0)
 
 
-class GetCommentMetadataExtractionFnTestCase(dendropytest.ExtendedTestCase):
-
-    def test_true_uses_default_parser(self):
-        fn = nexusprocessing.get_comment_metadata_extraction_fn(True)
-        self.assertIs(fn, nexusprocessing.parse_comment_metadata_dendropy_v5_0_0)
-
-    def test_false_disables(self):
-        self.assertIsNone(nexusprocessing.get_comment_metadata_extraction_fn(False))
-
-    def test_none_disables(self):
-        self.assertIsNone(nexusprocessing.get_comment_metadata_extraction_fn(None))
-
-    def test_callable_passthrough(self):
-        fn = nexusprocessing.parse_comment_metadata_beast2_v2_7_8
-        self.assertIs(nexusprocessing.get_comment_metadata_extraction_fn(fn), fn)
-
-    def test_lambda_passthrough(self):
-        fn = lambda comment: {}
-        self.assertIs(nexusprocessing.get_comment_metadata_extraction_fn(fn), fn)
-
-
 class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTestCase):
     """
     End-to-end tests confirming that a callable ``extract_comment_metadata``
@@ -424,6 +403,8 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
         self.assertEqual(result["A"]["raw"], "&rate=0.5,hpd={1.1,2.2}")
 
     def test_custom_callable_returning_empty_dict_falls_back_to_comments(self):
+        # when metadata extraction yields nothing, the raw comment is
+        # kept (as a plain comment) rather than silently dropped
         def no_op_parser(comment):
             return {}
         tree = dendropy.Tree.get(
