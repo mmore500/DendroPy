@@ -281,15 +281,12 @@ class NexusTaxonSymbolMapper(object):
 ###############################################################################
 ## Metadata
 ##
-## Each ``parse_comment_metadata_<suffix>(comment)`` function parses a
-## raw comment token into a plain ``dict`` of field name to value; the
-## suffix identifies the comment metadata idiom (tool/version) it
-## implements. :func:`comment_metadata_to_annotations` converts such a
-## ``dict`` into |Annotation| objects, and is used for this by both
-## :func:`process_comments_for_item` and |NewickReader| (for tree-level
-## comments). ``extract_comment_metadata``, as accepted by
-## |NewickReader|/|NexusReader|, may be set to any of these parse
-## functions.
+## Each ``parse_comment_metadata_<suffix>`` function parses a comment
+## token into a ``dict`` of field name to value, following the comment
+## metadata idiom of the tool/version named by its suffix; any of them
+## may be passed as ``extract_comment_metadata``. The resulting ``dict``
+## is converted to |Annotation| objects by
+## ``comment_metadata_to_annotations``.
 
 def comment_metadata_to_annotations(
         metadata,
@@ -341,11 +338,7 @@ def comment_metadata_to_annotations(
                 value = value_type(value)
         if key in field_name_map:
             key = field_name_map[key]
-        annote = basemodel.Annotation(
-                name=key,
-                value=value,
-                )
-        annotations.add(annote)
+        annotations.add(basemodel.Annotation(name=key, value=value))
     return annotations
 
 ###############################################################################
@@ -472,10 +465,7 @@ def parse_comment_metadata_to_annotations(
             comment,
             field_value_types=field_value_types,
             strip_leading_trailing_spaces=strip_leading_trailing_spaces)
-    # Note: ``field_value_types`` is *not* passed through to
-    # ``comment_metadata_to_annotations`` below, as it has already been
-    # applied (with DendroPy v5.0.0's particular value-kind-dependent
-    # semantics) by ``parse_comment_metadata_dendropy_v5_0_0`` above.
+    # ``field_value_types`` has already been applied, above
     return comment_metadata_to_annotations(
             metadata,
             annotations=annotations,
@@ -484,18 +474,12 @@ def parse_comment_metadata_to_annotations(
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
-## Grammar for BEAST2 v2.7.8-style "[&key=value,...]" comment metadata,
-## mirroring BEAST2's own ANTLR grammar (NewickParser.g4/NewickLexer.g4,
-## github.com/CompEvol/beast2, tag "v2.7.8"). This is the source grammar
-## for the generated, self-contained (no "lark" import) standalone
-## parser module _beast2_v2_7_8_lark_standalone.py, imported lazily
-## below; it is documentation only, not itself parsed/executed at
-## runtime.
-##
-## To regenerate that module from this grammar (requires the
-## third-party "lark" package -- not a DendroPy runtime dependency),
-## save the grammar below (between the "-----" markers) to a file and
-## run:
+## Source grammar for _beast2_v2_7_8_lark_standalone.py (generated, and
+## separately licensed: see item 5 of "NOTICES.rst"), mirroring BEAST2's
+## own ANTLR grammar (NewickParser.g4/NewickLexer.g4,
+## github.com/CompEvol/beast2, tag "v2.7.8"). To regenerate that module
+## (requires the third-party "lark" package -- not a DendroPy runtime
+## dependency), save the grammar below to a file and run:
 ##
 ##     python -m lark.tools.standalone -l basic \
 ##         <saved-grammar-file> \
@@ -534,18 +518,11 @@ def parse_comment_metadata_to_annotations(
 ##
 ## %ignore /[ \t\r\n]+/
 ## -----------------------------------------------------------------------
-##
-## Materialization (from ``TreeParser.processMetadata()``): a top-level
-## vector is a list of ``float`` only if every direct element's raw text
-## parses as a number; otherwise every element's raw text is used
-## unparsed (nested vector elements are not recursively materialized).
 
 class _Beast2V2_7_8_ValueNode(object):
     """
-    A parsed BEAST2-grammar ``attribValue``: either a number or (quoted
-    or unquoted) string leaf, or a vector of child ``attribValue`` nodes.
-    ``raw`` is the exact "significant" (whitespace-free) source text of
-    the node.
+    A parsed ``attribValue``: a number or string leaf, or a vector of
+    child nodes. ``raw`` is the node's whitespace-free source text.
     """
 
     __slots__ = ("kind", "raw", "elements")
@@ -561,7 +538,9 @@ def _beast2_v2_7_8_materialize_value(value_node):
     if value_node.kind == "string":
         raw = value_node.raw
         return raw[1:-1] if raw[:1] in ("'", '"') else raw
-    # value_node.kind == "vector"
+    # As in ``TreeParser.processMetadata()``, a vector is materialized as
+    # floats only if *every* element's raw text parses as one; otherwise
+    # raw text is used throughout, nested vectors included.
     try:
         return [float(element.raw) for element in value_node.elements]
     except ValueError:
@@ -617,14 +596,6 @@ def parse_comment_metadata_beast2_v2_7_8(
     arbitrarily-nested list ("vector") values, e.g.
     ``history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}``.
 
-    Implemented as a grammar-driven LALR(1) parser, generated (via
-    Lark's "Standalone Mode") from the grammar documented in the
-    module-level comment above. The generated parser module
-    (``dendropy.dataio._beast2_v2_7_8_lark_standalone``, imported lazily
-    on first call) is licensed separately from the rest of DendroPy,
-    under the Mozilla Public License, v. 2.0; see item 5 of
-    "NOTICES.rst".
-
     Suitable for use as (or wrapped by) the ``extract_comment_metadata``
     argument of |NewickReader|/|NexusReader| to correctly parse trees
     with this style of metadata comment.
@@ -645,9 +616,9 @@ def parse_comment_metadata_beast2_v2_7_8(
     ------
     ``ValueError``
         If ``comment`` is not well-formed according to the BEAST2
-        v2.7.8 metadata comment grammar (note this differs from the
-        other parsers in this module, which silently skip malformed
-        input).
+        v2.7.8 metadata comment grammar, which
+        :func:`parse_comment_metadata_dendropy_v5_0_0` would instead
+        silently skip.
 
     See Also
     --------

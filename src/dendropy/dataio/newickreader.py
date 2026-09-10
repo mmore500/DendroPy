@@ -158,11 +158,6 @@ class NewickReader(ioservice.DataReader):
             mapping field name to value, which is then converted into
             |Annotation| objects. This allows substituting a different
             comment metadata parser.
-
-            See Also
-            --------
-            dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
-            dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8
         store_tree_weights : boolean, default: |False|
             If |True|, process the tree weight (e.g. "[&W 1/2]") comment
             associated with each tree, if any. Defaults to |False|.
@@ -202,6 +197,12 @@ class NewickReader(ioservice.DataReader):
             If |True|, then unsupported or unrecognized keyword arguments will
             not result in an error. Default is |False|: unsupported keyword
             arguments will result in an error.
+
+        See Also
+        --------
+
+        :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0`
+        :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8`
 
         """
 

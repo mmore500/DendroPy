@@ -55,9 +55,8 @@ ISSUE_145_COMMENT = "&history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}"
 class DendroPyV5_0_0CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     """
     ``parse_comment_metadata_dendropy_v5_0_0`` is DendroPy's original
-    (pre-issue-145-fix) comment metadata parser, factored out unchanged
-    so that it remains available (and is used as the default parser, for
-    backward compatibility) despite its nested-list limitation.
+    comment metadata parser, retained as the default: its nested-list
+    limitation is part of the behavior tested for here.
     """
 
     def test_simple_scalar_values(self):
@@ -108,11 +107,8 @@ class DendroPyV5_0_0CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase
 
 class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.ExtendedTestCase):
     """
-    ``parse_comment_metadata_to_annotations`` is retained, with its
-    original signature and (Annotation-set-returning) behavior, as a
-    backward-compatibility wrapper around
-    ``parse_comment_metadata_dendropy_v5_0_0`` +
-    ``comment_metadata_to_annotations``.
+    ``parse_comment_metadata_to_annotations`` retains its original
+    signature and Annotation-set-returning behavior.
     """
 
     def _as_dict(self, annotations):
@@ -143,12 +139,9 @@ class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.Exten
 class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     """
     ``parse_comment_metadata_beast2_v2_7_8`` reproduces the comment
-    metadata parsing behavior of BEAST2 v2.7.8's ``TreeParser``, via a
-    grammar-driven LALR(1) parser generated (using Lark's Standalone
-    Mode) from a grammar mirroring BEAST2's own ANTLR grammar
-    (``NewickParser.g4``/``NewickLexer.g4``); unlike the other parsers
-    in this module, it correctly (and non-destructively) handles
-    arbitrarily-nested list-valued annotations.
+    metadata parsing behavior of BEAST2 v2.7.8's ``TreeParser``,
+    including correct handling of arbitrarily-nested list-valued
+    annotations.
     """
 
     def test_numbers_and_strings(self):
