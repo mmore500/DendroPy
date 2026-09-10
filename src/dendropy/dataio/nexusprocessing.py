@@ -701,6 +701,115 @@ def parse_comment_metadata_beast2_v2_7_8(
         metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
     return metadata
 
+@functools.lru_cache(maxsize=None)
+def _beast2_v2_7_8_lark_parser_and_transformer():
+    # imported lazily so that the (large, generated) standalone parser
+    # module is only ever loaded if this parser is actually used
+    from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
+
+    class _ToValueNode(standalone.Transformer):
+
+        def key(self, children):
+            (token,) = children
+            text = token.value
+            return text[1:-1] if text[:1] in ("'", '"') else text
+
+        def number(self, children):
+            (token,) = children
+            return _Beast2V2_7_8_ValueNode("number", token.value)
+
+        def string(self, children):
+            (token,) = children
+            return _Beast2V2_7_8_ValueNode("string", token.value)
+
+        dqstring = string
+        sqstring = string
+
+        def vector(self, children):
+            raw = "{" + ",".join(child.raw for child in children) + "}"
+            return _Beast2V2_7_8_ValueNode("vector", raw, elements=list(children))
+
+        def attrib(self, children):
+            return tuple(children)
+
+        def attribs(self, children):
+            return list(children)
+
+        def start(self, children):
+            (attribs,) = children
+            return attribs
+
+    return standalone, standalone.Lark_StandAlone(), _ToValueNode()
+
+def parse_comment_metadata_beast2_v2_7_8_lark(
+        comment,
+        strip_leading_trailing_spaces=True):
+    """
+    Equivalent to ``parse_comment_metadata_beast2_v2_7_8``, but implemented
+    as a grammar-driven LALR(1) parser generated (via Lark's "Standalone
+    Mode") from the grammar at
+    ``dev/grammars/beast2_v2_7_8_comment_metadata.lark``, rather than by
+    hand-rolled recursive descent. Included to demonstrate that approach;
+    ``parse_comment_metadata_beast2_v2_7_8`` remains the parser actually
+    used by default.
+
+    The generated parser module
+    (``dendropy.dataio._beast2_v2_7_8_lark_standalone``, imported lazily
+    on first call, regenerated via ``dev/generate_beast2_lark_parser.py``)
+    is licensed separately from the rest of DendroPy, under the Mozilla
+    Public License, v. 2.0; see item 5 of "NOTICES.rst".
+
+    Parameters
+    ----------
+    ``comment`` : string
+        A comment token.
+    ``strip_leading_trailing_spaces`` : boolean
+        Remove whitespace from comments.
+
+    Returns
+    -------
+    metadata : dict
+        Dictionary of field name to (parsed) value.
+
+    Raises
+    ------
+    ``ValueError``
+        If ``comment`` is not well-formed according to the BEAST2
+        v2.7.8 metadata comment grammar.
+
+    See Also
+    --------
+    parse_comment_metadata_beast2_v2_7_8
+    """
+    metadata = {}
+    if comment.startswith("&&"):
+        body = comment[2:]
+    elif comment.startswith("&"):
+        body = comment[1:]
+    else:
+        # unrecognized metadata pattern
+        return metadata
+    if strip_leading_trailing_spaces:
+        body = body.strip()
+    if not body:
+        return metadata
+    standalone, parser, transformer = _beast2_v2_7_8_lark_parser_and_transformer()
+    try:
+        tree = parser.parse(body)
+    except standalone.UnexpectedInput as e:
+        raise ValueError(
+                "Malformed BEAST2-style metadata comment: {}".format(e))
+    except RecursionError:
+        # pathologically deep vector nesting
+        raise ValueError(
+                "Malformed BEAST2-style metadata comment: vector nesting"
+                " is too deep to parse")
+    for key, value_node in transformer.transform(tree):
+        if strip_leading_trailing_spaces:
+            key = key.strip()
+        metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
+    return metadata
+
 def process_comments_for_item(item,
         item_comments,
         extract_comment_metadata):

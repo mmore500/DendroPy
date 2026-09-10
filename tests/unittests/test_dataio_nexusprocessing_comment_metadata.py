@@ -25,6 +25,12 @@ the BEAST2-version-specific parser added to address main fork issue #145
 (https://github.com/jeetsukumaran/DendroPy/issues/145): DendroPy's original
 comment metadata parser mis-parses nested list-valued ("vector")
 annotations, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
+
+Also covers ``parse_comment_metadata_beast2_v2_7_8_lark``, a
+grammar-driven reimplementation of the same BEAST2 v2.7.8 comment
+metadata parser built with Lark's Standalone Mode, via
+``Beast2V2_7_8LarkCommentMetadataParsingTestCase``, which reruns the
+hand-rolled parser's own test cases against it to confirm parity.
 """
 
 import sys
@@ -148,85 +154,105 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     (``NewickParser.g4``/``NewickLexer.g4``); unlike the other parsers
     in this module, it correctly (and non-destructively) handles
     arbitrarily-nested list-valued annotations.
+
+    All test bodies are written against ``self.PARSE_FN`` rather than
+    calling ``parse_comment_metadata_beast2_v2_7_8`` directly, so that
+    ``Beast2V2_7_8LarkCommentMetadataParsingTestCase`` below can reuse
+    them unchanged to confirm that
+    ``parse_comment_metadata_beast2_v2_7_8_lark`` (a grammar-driven
+    reimplementation built with Lark's Standalone Mode) behaves
+    identically.
     """
 
+    PARSE_FN = staticmethod(nexusprocessing.parse_comment_metadata_beast2_v2_7_8)
+
     def test_numbers_and_strings(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                '&rate=0.0123,label="hello",tag=bareword')
+        d = self.PARSE_FN('&rate=0.0123,label="hello",tag=bareword')
         self.assertEqual(d, {"rate": 0.0123, "label": "hello", "tag": "bareword"})
 
     def test_single_quoted_value(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&label='hello'")
+        d = self.PARSE_FN("&label='hello'")
         self.assertEqual(d, {"label": "hello"})
 
     def test_negative_and_scientific_notation_numbers(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                "&a=-1.5,b=4.938776751387227E-4")
+        d = self.PARSE_FN("&a=-1.5,b=4.938776751387227E-4")
         self.assertEqual(d["a"], -1.5)
         self.assertAlmostEqual(d["b"], 4.938776751387227E-4)
 
     def test_all_numeric_vector(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&hpd={1.1,2.2,3.3}")
+        d = self.PARSE_FN("&hpd={1.1,2.2,3.3}")
         self.assertEqual(d, {"hpd": [1.1, 2.2, 3.3]})
 
     def test_mixed_vector_falls_back_to_raw_text(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&x={1,"a"}')
+        d = self.PARSE_FN('&x={1,"a"}')
         self.assertEqual(d["x"], ["1", '"a"'])
 
     def test_string_only_vector_falls_back_to_raw_text(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={C,T,A,G}")
+        d = self.PARSE_FN("&x={C,T,A,G}")
         self.assertEqual(d["x"], ["C", "T", "A", "G"])
 
     def test_nested_vector_resolves_issue_145(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(ISSUE_145_COMMENT)
+        d = self.PARSE_FN(ISSUE_145_COMMENT)
         self.assertEqual(
                 d["history_all"],
                 ["{57,0.08,C,T}", "{134,0.079,A,G}", "{4,0.07,C,T}"])
 
     def test_doubly_nested_vector(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={{{1,2},{3,4}},{5,6}}")
+        d = self.PARSE_FN("&x={{{1,2},{3,4}},{5,6}}")
         self.assertEqual(d["x"], ["{{1,2},{3,4}}", "{5,6}"])
 
     def test_whitespace_is_tolerated(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                "& rate = 0.5 , hpd = { 1.1 , 2.2 } ")
+        d = self.PARSE_FN("& rate = 0.5 , hpd = { 1.1 , 2.2 } ")
         self.assertEqual(d, {"rate": 0.5, "hpd": [1.1, 2.2]})
 
     def test_empty_comment_returns_empty(self):
-        self.assertEqual(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&"), {})
+        self.assertEqual(self.PARSE_FN("&"), {})
 
     def test_unrecognized_comment_returns_empty(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("not a metadata comment")
+        d = self.PARSE_FN("not a metadata comment")
         self.assertEqual(d, {})
 
     def test_malformed_missing_value_raises(self):
         with self.assertRaises(ValueError):
-            nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&rate=")
+            self.PARSE_FN("&rate=")
 
     def test_malformed_unbalanced_vector_raises(self):
         with self.assertRaises(ValueError):
-            nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={1,2")
+            self.PARSE_FN("&x={1,2")
 
     def test_malformed_trailing_content_raises(self):
         with self.assertRaises(ValueError):
-            nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&rate=0.5,,")
+            self.PARSE_FN("&rate=0.5,,")
 
     def test_numeric_only_key_raises(self):
         # per the BEAST2 grammar, an attribute key must lex as ASTRING,
         # not as a number
         with self.assertRaises(ValueError):
-            nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&123=5")
+            self.PARSE_FN("&123=5")
 
     def test_real_mcc_tree_example_comment(self):
         # exercised against realistic (non-nested) MCC-tree metadata
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                REAL_MCC_TREE_EXAMPLE_COMMENT)
+        d = self.PARSE_FN(REAL_MCC_TREE_EXAMPLE_COMMENT)
         self.assertEqual(d["state"], "D")
         self.assertEqual(d["state.prob"], 1.0)
         self.assertAlmostEqual(d["rate"], 0.007334968720519001)
         self.assertEqual(
                 d["rate_range"],
                 [4.938776751387227E-4, 0.036916549293719556])
+
+
+class Beast2V2_7_8LarkCommentMetadataParsingTestCase(Beast2V2_7_8CommentMetadataParsingTestCase):
+    """
+    Reruns every ``Beast2V2_7_8CommentMetadataParsingTestCase`` test
+    against ``parse_comment_metadata_beast2_v2_7_8_lark`` -- a
+    grammar-driven reimplementation of the same BEAST2 v2.7.8 comment
+    metadata format, generated (via Lark's Standalone Mode) from the
+    grammar at ``dev/grammars/beast2_v2_7_8_comment_metadata.lark`` --
+    to confirm it agrees with the hand-rolled recursive-descent parser
+    on every case, error handling included.
+    """
+
+    PARSE_FN = staticmethod(nexusprocessing.parse_comment_metadata_beast2_v2_7_8_lark)
 
 
 class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
@@ -296,6 +322,17 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
         tree = dendropy.Tree.get(
                 data=self.NEWICK_STR, schema="newick",
                 extract_comment_metadata=nexusprocessing.parse_comment_metadata_beast2_v2_7_8)
+        result = self._annotations_by_taxon_label(tree)
+        self.assertEqual(
+                result["B"]["history_all"],
+                ["{57,0.08,C,T}", "{134,0.079,A,G}"])
+        self.assertEqual(result["A"]["rate"], 0.5)
+        self.assertEqual(result["A"]["hpd"], [1.1, 2.2])
+
+    def test_extract_comment_metadata_callable_beast2_lark_matches(self):
+        tree = dendropy.Tree.get(
+                data=self.NEWICK_STR, schema="newick",
+                extract_comment_metadata=nexusprocessing.parse_comment_metadata_beast2_v2_7_8_lark)
         result = self._annotations_by_taxon_label(tree)
         self.assertEqual(
                 result["B"]["history_all"],
