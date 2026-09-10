@@ -157,9 +157,12 @@ class NewickReader(ioservice.DataReader):
             single comment token string and must return a ``dict``
             mapping field name to value, which is then converted into
             |Annotation| objects. This allows substituting a different
-            comment metadata parser, such as one of the other
-            ``dendropy.dataio.nexusprocessing.parse_comment_metadata_<suffix>``
-            functions.
+            comment metadata parser.
+
+            See Also
+            --------
+            dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
+            dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8
         store_tree_weights : boolean, default: |False|
             If |True|, process the tree weight (e.g. "[&W 1/2]") comment
             associated with each tree, if any. Defaults to |False|.

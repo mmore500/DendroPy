@@ -25,6 +25,7 @@ Specialized tokenizer for processing NEXUS/Newick streams.
 import re
 import itertools
 import decimal
+import functools
 from dendropy.dataio.tokenizer import Tokenizer
 from dendropy.utility import textprocessing
 from dendropy.utility import container
@@ -388,7 +389,6 @@ def parse_comment_metadata_dendropy_v5_0_0(
 
     See Also
     --------
-    parse_comment_metadata_figtree_v1_4_4
     parse_comment_metadata_beast2_v2_7_8
     """
     metadata = {}
@@ -482,137 +482,29 @@ def parse_comment_metadata_to_annotations(
             field_name_map=field_name_map)
 
 ###############################################################################
-## Metadata: FigTree v1.4.4 comment metadata idiom
-##
-## Ported from JEBL's ``NexusImporter.parseMetaCommentPairs()``/
-## ``parseValue()``, at the commit bundled in the FigTree v1.4.4 release:
-## https://github.com/rambaut/jebl2/blob/c5d018e774ba7f62d6e8dadd8d30b631511908a9/src/jebl/evolution/io/NexusImporter.java
-## Known limitation (matches upstream): nested list ("vector") values,
-## e.g. ``{{1,2},{3,4}}``, are not parsed correctly. See
-## :func:`parse_comment_metadata_beast2_v2_7_8` for correct nested-list
-## support.
-
-FIGTREE_V1_4_4_COMMENT_PAIR_PATTERN = re.compile(
-        r'("[^"]*"+|[^,=\s]+)\s*(=\s*(\{[^=}]*\}|"[^"]*"+|[^,]+))?')
-
-def _figtree_v1_4_4_parse_value(raw_value):
-    raw_value = raw_value.strip()
-    if raw_value.startswith("{"):
-        inner = raw_value[1:-1]
-        elements = inner.split(",") if inner else []
-        return [_figtree_v1_4_4_parse_value(element) for element in elements]
-    if raw_value.startswith("#"):
-        color_value = raw_value[1:]
-        try:
-            rgb = int(color_value) if color_value.startswith("-") else int(color_value, 16)
-        except ValueError:
-            pass
-        else:
-            return ((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF)
-    if raw_value.startswith('"') and raw_value.endswith('"'):
-        return raw_value[1:-1]
-    if raw_value.lower() == "true":
-        return True
-    if raw_value.lower() == "false":
-        return False
-    try:
-        return int(raw_value)
-    except ValueError:
-        pass
-    try:
-        return float(raw_value)
-    except ValueError:
-        pass
-    return raw_value
-
-def parse_comment_metadata_figtree_v1_4_4(
-        comment,
-        strip_leading_trailing_spaces=True):
-    """
-    Returns a dictionary of field name to value pairs parsed out of a
-    "[&key=value,...]"-style comment, matching the behavior of FigTree
-    v1.4.4's bundled JEBL ``NexusImporter`` -- including its
-    single-level-only handling of list ("vector") values.
-
-    Suitable for use as (or wrapped by) the ``extract_comment_metadata``
-    argument of |NewickReader|/|NexusReader|.
-
-    Parameters
-    ----------
-    ``comment`` : string
-        A comment token.
-    ``strip_leading_trailing_spaces`` : boolean
-        Remove whitespace from comments.
-
-    Returns
-    -------
-    metadata : dict
-        Dictionary of field name to (parsed) value.
-
-    See Also
-    --------
-    parse_comment_metadata_dendropy_v5_0_0
-    parse_comment_metadata_beast2_v2_7_8
-    """
-    metadata = {}
-    if comment.startswith("&&"):
-        comment = comment[2:]
-    elif comment.startswith("&"):
-        comment = comment[1:]
-    else:
-        # unrecognized metadata pattern
-        return metadata
-    for match in FIGTREE_V1_4_4_COMMENT_PAIR_PATTERN.finditer(comment):
-        key = match.group(1)
-        if key.startswith('"'):
-            key = key[1:-1]
-        if strip_leading_trailing_spaces:
-            key = key.strip()
-        if not key:
-            raise ValueError("Badly formatted attribute: '{}'".format(match.group(0)))
-        value_clause = match.group(2)
-        if value_clause is not None and value_clause.strip():
-            value = _figtree_v1_4_4_parse_value(value_clause[1:])
-        else:
-            value = True
-        metadata[key] = value
-    return metadata
-
-###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
-## BEAST2 (as of v2.7.8) parses "[&key=value,...]" comment metadata using
-## an ANTLR-generated recursive-descent parser
-## (``beast.base.evolution.tree.treeparser.NewickParser``/``NewickLexer``,
-## github.com/CompEvol/beast2, tag "v2.7.8"), whose grammar correctly
-## supports arbitrarily-nested list ("vector") values, e.g.
-## ``history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}``. The
-## tokenizer/parser below is a direct re-implementation of that grammar.
+## Re-implements the ANTLR grammar from
+## ``beast.base.evolution.tree.treeparser.NewickParser``/``NewickLexer``
+## (github.com/CompEvol/beast2, tag "v2.7.8").
 ##
-## Faithfully replicated from ``TreeParser.processMetadata()``: a
-## top-level vector value is materialized as a list of ``float`` only if
-## *every* one of its direct elements' raw source text parses as a
-## number; otherwise, the raw source text of every element is used
-## (unparsed) -- so a vector containing a nested vector or a quoted
-## string among its elements is materialized as a list of strings, each
-## representing the corresponding element's source text verbatim (nested
-## vector elements are *not* recursively materialized into lists).
+## Materialization (from ``TreeParser.processMetadata()``): a top-level
+## vector is a list of ``float`` only if every direct element's raw text
+## parses as a number; otherwise every element's raw text is used
+## unparsed (nested vector elements are not recursively materialized).
 
-class Beast2CommentMetadataError(ValueError):
-    """
-    Raised when a comment cannot be parsed as a well-formed BEAST2
-    v2.7.8-style "[&key=value,...]" metadata comment.
-    """
-    pass
-
-_BEAST2_V2_7_8_NNINT_PATTERN = r"(?:0|[1-9]\d*)"
-_BEAST2_V2_7_8_NUMBER_PATTERN = re.compile(
-        r"-?(?:" + _BEAST2_V2_7_8_NNINT_PATTERN + r"?\.\d+|"
-        + _BEAST2_V2_7_8_NNINT_PATTERN + r"(?:\.\d*)?)(?:[eE]-?\d+)?")
-_BEAST2_V2_7_8_UNQUOTED_STRING_PATTERN = re.compile(r"[a-zA-Z0-9|#*%/.\-+_&:]+")
-_BEAST2_V2_7_8_DQUOTED_STRING_PATTERN = re.compile(r'"[^"]*"')
-_BEAST2_V2_7_8_SQUOTED_STRING_PATTERN = re.compile(r"'[^']*'")
-_BEAST2_V2_7_8_WHITESPACE_PATTERN = re.compile(r"[ \t\r\n]+")
+@functools.lru_cache(maxsize=None)
+def _beast2_v2_7_8_patterns():
+    # compiled lazily (on first use) rather than at module load
+    nnint = r"(?:0|[1-9]\d*)"
+    number = r"-?(?:" + nnint + r"?\.\d+|" + nnint + r"(?:\.\d*)?)(?:[eE]-?\d+)?"
+    return {
+            "number": re.compile(number),
+            "unquoted_string": re.compile(r"[a-zA-Z0-9|#*%/.\-+_&:]+"),
+            "dquoted_string": re.compile(r'"[^"]*"'),
+            "squoted_string": re.compile(r"'[^']*'"),
+            "whitespace": re.compile(r"[ \t\r\n]+"),
+            }
 
 class _Beast2V2_7_8_ValueNode(object):
     """
@@ -635,15 +527,16 @@ class _Beast2V2_7_8_AttribTokenizer(object):
     def __init__(self, text):
         self.text = text
         self.pos = 0
+        self.patterns = _beast2_v2_7_8_patterns()
 
     def error(self, message):
-        raise Beast2CommentMetadataError(
+        raise ValueError(
                 "Malformed BEAST2-style metadata comment at position {}"
                 " (near '{}'): {}".format(
                     self.pos, self.text[self.pos:self.pos + 16], message))
 
     def skip_whitespace(self):
-        match = _BEAST2_V2_7_8_WHITESPACE_PATTERN.match(self.text, self.pos)
+        match = self.patterns["whitespace"].match(self.text, self.pos)
         if match:
             self.pos = match.end()
 
@@ -651,8 +544,8 @@ class _Beast2V2_7_8_AttribTokenizer(object):
         return self.text[self.pos] if self.pos < len(self.text) else ""
 
     def _match_quoted(self, quote_char):
-        pattern = (_BEAST2_V2_7_8_DQUOTED_STRING_PATTERN if quote_char == '"'
-                else _BEAST2_V2_7_8_SQUOTED_STRING_PATTERN)
+        pattern = (self.patterns["dquoted_string"] if quote_char == '"'
+                else self.patterns["squoted_string"])
         match = pattern.match(self.text, self.pos)
         if not match:
             self.error("unterminated {}-quoted string".format(quote_char))
@@ -664,10 +557,10 @@ class _Beast2V2_7_8_AttribTokenizer(object):
         char = self.peek_char()
         if char in ("'", '"'):
             return self._match_quoted(char)[1:-1]
-        match = _BEAST2_V2_7_8_UNQUOTED_STRING_PATTERN.match(self.text, self.pos)
+        match = self.patterns["unquoted_string"].match(self.text, self.pos)
         if not match:
             self.error("expected attribute key")
-        number_match = _BEAST2_V2_7_8_NUMBER_PATTERN.match(self.text, self.pos)
+        number_match = self.patterns["number"].match(self.text, self.pos)
         if number_match and number_match.end() == match.end():
             self.error("numeric literal cannot be used as an attribute key")
         self.pos = match.end()
@@ -681,8 +574,8 @@ class _Beast2V2_7_8_AttribTokenizer(object):
         if char in ("'", '"'):
             raw = self._match_quoted(char)
             return _Beast2V2_7_8_ValueNode("string", raw)
-        number_match = _BEAST2_V2_7_8_NUMBER_PATTERN.match(self.text, self.pos)
-        string_match = _BEAST2_V2_7_8_UNQUOTED_STRING_PATTERN.match(self.text, self.pos)
+        number_match = self.patterns["number"].match(self.text, self.pos)
+        string_match = self.patterns["unquoted_string"].match(self.text, self.pos)
         number_len = (number_match.end() - self.pos) if number_match else -1
         string_len = (string_match.end() - self.pos) if string_match else -1
         if number_len < 0 and string_len < 0:
@@ -772,16 +665,15 @@ def parse_comment_metadata_beast2_v2_7_8(
 
     Raises
     ------
-    ``Beast2CommentMetadataError``
+    ``ValueError``
         If ``comment`` is not well-formed according to the BEAST2
-        v2.7.8 metadata comment grammar (a :class:`ValueError` subclass;
-        note this differs from the other parsers in this module, which
-        silently skip malformed input).
+        v2.7.8 metadata comment grammar (note this differs from the
+        other parsers in this module, which silently skip malformed
+        input).
 
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
-    parse_comment_metadata_figtree_v1_4_4
     """
     metadata = {}
     if comment.startswith("&&"):
@@ -799,9 +691,8 @@ def parse_comment_metadata_beast2_v2_7_8(
     try:
         attribs = tokenizer.match_attribs()
     except RecursionError:
-        # pathologically deep vector nesting; converted to the documented
-        # exception type rather than letting a raw RecursionError escape
-        raise Beast2CommentMetadataError(
+        # pathologically deep vector nesting
+        raise ValueError(
                 "Malformed BEAST2-style metadata comment: vector nesting"
                 " is too deep to parse")
     for key, value_node in attribs:
@@ -815,9 +706,6 @@ def process_comments_for_item(item,
         extract_comment_metadata):
     if not item_comments or item is None:
         return
-    # ``extract_comment_metadata``: a callable ``fn(comment) -> dict`` is
-    # used as-is; |True| uses the default parser; anything else disables
-    # extraction.
     if callable(extract_comment_metadata):
         parse_fn = extract_comment_metadata
     elif extract_comment_metadata:

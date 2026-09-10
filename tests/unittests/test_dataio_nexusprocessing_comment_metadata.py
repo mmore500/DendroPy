@@ -21,16 +21,10 @@
 """
 Tests for comment metadata extraction (``dendropy.dataio.nexusprocessing``),
 including support for a callable ``extract_comment_metadata`` argument and
-the FigTree- and BEAST2-version-specific parsers added to address main fork
-issue #145 (https://github.com/jeetsukumaran/DendroPy/issues/145):
-DendroPy's original comment metadata parser mis-parses nested list-valued
-("vector") annotations, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
-
-A couple of the fixture comment strings below (marked accordingly) are
-excerpted verbatim from ``HA_discrete_MCC.tre``, one of the example trees
-bundled with the FigTree v1.4.4 source distribution
-(github.com/rambaut/figtree, tag "v1.4.4"), to check the parsers against
-realistic, tool-generated output rather than only hand-constructed cases.
+the BEAST2-version-specific parser added to address main fork issue #145
+(https://github.com/jeetsukumaran/DendroPy/issues/145): DendroPy's original
+comment metadata parser mis-parses nested list-valued ("vector")
+annotations, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
 """
 
 import sys
@@ -42,9 +36,10 @@ from dendropy.dataio import nexusprocessing
 sys.path.insert(0, os.path.dirname(__file__))
 from support import dendropytest
 
-# Verbatim (whitespace preserved) from a node comment in
-# figtree/examples/HA_discrete_MCC.tre (FigTree v1.4.4 source tag).
-REAL_FIGTREE_EXAMPLE_COMMENT = (
+# Verbatim (whitespace preserved) from a node comment in a real BEAST/
+# TreeAnnotator-format MCC tree (``HA_discrete_MCC.tre``, bundled as an
+# example with the FigTree v1.4.4 source distribution).
+REAL_MCC_TREE_EXAMPLE_COMMENT = (
         '&rate_range={4.938776751387227E-4,0.036916549293719556},'
         'height_median=9.000000000000002,'
         'length=0.6825227857160625,'
@@ -145,71 +140,6 @@ class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.Exten
         self.assertEqual(self._as_dict(combined), {"a": "1", "b": "2"})
 
 
-class FigTreeV1_4_4CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
-    """
-    ``parse_comment_metadata_figtree_v1_4_4`` reproduces the comment
-    metadata parsing behavior of FigTree v1.4.4, reverse-engineered from
-    the bytecode of the bundled JEBL ``NexusImporter`` class (see the
-    module-level comments in ``nexusprocessing.py`` for details).
-    """
-
-    def test_numbers_and_strings(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4(
-                '&rate=0.0123,posterior=1,label="hello"')
-        self.assertEqual(d, {"rate": 0.0123, "posterior": 1, "label": "hello"})
-
-    def test_bare_key_is_boolean_true(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4("&selected")
-        self.assertEqual(d, {"selected": True})
-
-    def test_booleans_case_insensitive(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4("&a=true,b=FALSE,c=True")
-        self.assertEqual(d, {"a": True, "b": False, "c": True})
-
-    def test_single_level_vector(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4(
-                "&height_95%_HPD={1.1,2.2,3.3}")
-        self.assertEqual(d, {"height_95%_HPD": [1.1, 2.2, 3.3]})
-
-    def test_negative_and_scientific_notation_numbers(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4(
-                "&a=-1.5,b=4.938776751387227E-4")
-        self.assertEqual(d["a"], -1.5)
-        self.assertAlmostEqual(d["b"], 4.938776751387227E-4)
-
-    def test_color_hex(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4("&!color=#ff0000")
-        self.assertEqual(d, {"!color": (255, 0, 0)})
-
-    def test_color_old_style_negative_decimal(self):
-        # legacy FigTree color encoding: '#' followed by a negative,
-        # packed-decimal RGB int (see JEBL's ``parseValue``)
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4("&!color=#-16776961")
-        self.assertEqual(d, {"!color": (0, 0, 255)})
-
-    def test_nested_vector_cascading_mis_parse_is_stable(self):
-        # Locks in FigTree v1.4.4's actual (buggy, and rather baroque)
-        # behavior for nested lists: the regex-based value pattern only
-        # matches up to the first inner "}", and the malformed remainder
-        # of the source text is then re-scanned for more (bogus, bare
-        # boolean) key=value pairs.
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4(ISSUE_145_COMMENT)
-        self.assertEqual(d["history_all"], [[5], 0.08, "C", "T"])
-        self.assertTrue(d["{134"])
-        self.assertTrue(d["0.079"])
-        self.assertTrue(d["T}}"])
-
-    def test_real_figtree_example_tree_comment(self):
-        d = nexusprocessing.parse_comment_metadata_figtree_v1_4_4(
-                REAL_FIGTREE_EXAMPLE_COMMENT)
-        self.assertEqual(d["state"], "D")
-        self.assertEqual(d["state.prob"], 1.0)
-        self.assertAlmostEqual(d["rate"], 0.007334968720519001)
-        self.assertEqual(
-                d["rate_range"],
-                [4.938776751387227E-4, 0.036916549293719556])
-
-
 class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     """
     ``parse_comment_metadata_beast2_v2_7_8`` reproduces the comment
@@ -270,29 +200,27 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(d, {})
 
     def test_malformed_missing_value_raises(self):
-        with self.assertRaises(nexusprocessing.Beast2CommentMetadataError):
+        with self.assertRaises(ValueError):
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&rate=")
 
     def test_malformed_unbalanced_vector_raises(self):
-        with self.assertRaises(nexusprocessing.Beast2CommentMetadataError):
+        with self.assertRaises(ValueError):
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={1,2")
 
     def test_malformed_trailing_content_raises(self):
-        with self.assertRaises(nexusprocessing.Beast2CommentMetadataError):
+        with self.assertRaises(ValueError):
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&rate=0.5,,")
 
     def test_numeric_only_key_raises(self):
         # per the BEAST2 grammar, an attribute key must lex as ASTRING,
         # not as a number
-        with self.assertRaises(nexusprocessing.Beast2CommentMetadataError):
+        with self.assertRaises(ValueError):
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&123=5")
 
-    def test_real_figtree_example_tree_comment(self):
-        # exercised against realistic (non-nested) MCC-tree metadata to
-        # confirm the BEAST2-grammar parser agrees with the FigTree
-        # parser wherever the underlying annotations are unambiguous
+    def test_real_mcc_tree_example_comment(self):
+        # exercised against realistic (non-nested) MCC-tree metadata
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                REAL_FIGTREE_EXAMPLE_COMMENT)
+                REAL_MCC_TREE_EXAMPLE_COMMENT)
         self.assertEqual(d["state"], "D")
         self.assertEqual(d["state.prob"], 1.0)
         self.assertAlmostEqual(d["rate"], 0.007334968720519001)
@@ -372,14 +300,6 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
         self.assertEqual(
                 result["B"]["history_all"],
                 ["{57,0.08,C,T}", "{134,0.079,A,G}"])
-        self.assertEqual(result["A"]["rate"], 0.5)
-        self.assertEqual(result["A"]["hpd"], [1.1, 2.2])
-
-    def test_extract_comment_metadata_callable_figtree(self):
-        tree = dendropy.Tree.get(
-                data=self.NEWICK_STR, schema="newick",
-                extract_comment_metadata=nexusprocessing.parse_comment_metadata_figtree_v1_4_4)
-        result = self._annotations_by_taxon_label(tree)
         self.assertEqual(result["A"]["rate"], 0.5)
         self.assertEqual(result["A"]["hpd"], [1.1, 2.2])
 
