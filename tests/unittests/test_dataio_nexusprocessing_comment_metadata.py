@@ -333,8 +333,8 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
                 ["{57,0.08,C,T}", "{134,0.079,A,G}"])
 
     def test_annotations_follow_comment_order(self):
-        # annotation order is stable from run to run: the metadata dict
-        # is applied to the target set directly, rather than by way of
+        # annotation order is stable from run to run: the parsed pairs
+        # are applied to the target set directly, rather than by way of
         # an intermediate (unordered) ``set``
         tree = dendropy.Tree.get(
                 data="(A[&aa=1,bb=2,cc=3,dd=4,ee=5,ff=6]:1,B:1);",
@@ -367,7 +367,7 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
                 self.assertEqual(len(nd.annotations), 0)
                 self.assertEqual(len(nd.comments), 1)
 
-    def test_custom_callable_returning_empty_dict_falls_back_to_comments(self):
+    def test_custom_callable_returning_empty_falls_back_to_comments(self):
         # when metadata extraction yields nothing, the raw comment is
         # kept (as a plain comment) rather than silently dropped
         def no_op_parser(comment):
