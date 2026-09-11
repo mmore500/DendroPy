@@ -424,24 +424,6 @@ def parse_comment_metadata_to_annotations(
             field_name_map=field_name_map)
 
 ###############################################################################
-## Metadata: warning when a leading "&&NHX" marker won't be understood
-##
-## Shared by any comment metadata parser that mimics an external tool's
-## own syntax exactly (BEAST2's, and others to come) and so, unlike
-## parse_comment_metadata_dendropy_v5_0_0, does not understand NHX's
-## "&&NHX:"-prefixed convention.
-
-def _warn_if_nhx_marker(comment, parser_name):
-    if comment.startswith("&&NHX"):
-        warnings.warn(
-                "{} do not understand NHX syntax: the leading \"&&NHX\""
-                " marker is parsed as literal key text, not stripped."
-                " To silence this: use parse_comment_metadata_dendropy_v5_0_0"
-                " instead, strip the marker yourself first (e.g. via"
-                " re.sub), or prefix the comment with whitespace to skip"
-                " it as metadata entirely.".format(parser_name))
-
-###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
 ## To regenerate _beast2_v2_7_8_lark_standalone.py from the grammar below
@@ -485,15 +467,16 @@ def _beast2_v2_7_8_unquote(text):
     # BEAST2 tests only the leading quote, then strips both ends
     return text[1:-1] if text[:1] in ("'", '"') else text
 
-def _beast2_v2_7_8_strip_marker(comment):
-    # returns None for an unrecognized comment; real BEAST2's lexer only
-    # ever strips a single leading "&" (OPENA is literally "[&"), so a
-    # second "&" is left to lex as part of the first attribute's key
-    _warn_if_nhx_marker(comment, "BEAST2 comment metadata parsers")
-    if comment.startswith("&"):
-        return comment[1:]
-    else:
-        return None
+def _warn_if_nhx_marker(comment, parser_name):
+    if comment.startswith("&&NHX"):
+        warnings.warn(
+                "{} do not support \"&&NHX\" annotations: the marker is"
+                " not stripped. To silence, use an alternate comment"
+                " metadata parser (parse_comment_metadata_dendropy_v5_0_0),"
+                " strip it first (extract_comment_metadata=lambda c:"
+                " parser(re.sub(r'^&&NHX:?', '&', c))), or insert"
+                " whitespace (lambda c: '& ' + c[1:] if"
+                " c.startswith('&&NHX') else c).".format(parser_name))
 
 def _beast2_v2_7_8_raw_text(value_tree):
     # BEAST2 skips whitespace in its lexer, so the ``getText()`` that
@@ -616,17 +599,17 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Notes
     -----
-    A leading "&&" is not treated as an NHX-style marker: only a single
-    leading "&" is stripped, matching real BEAST2's own lexer, and a
-    ``UserWarning`` is issued (see its message for how to silence it).
+    Does not support "&&NHX" style annotations.
 
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
     parse_comment_metadata_beast2_v2_7_8_nesting
     """
-    body = _beast2_v2_7_8_strip_marker(comment)
-    if body is None:
+    _warn_if_nhx_marker(comment, "BEAST2 comment metadata parsers")
+    if comment.startswith("&"):
+        body = comment[1:]
+    else:
         # unrecognized metadata pattern
         return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
@@ -681,16 +664,16 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
 
     Notes
     -----
-    A leading "&&" is not treated as an NHX-style marker: only a single
-    leading "&" is stripped, matching real BEAST2's own lexer, and a
-    ``UserWarning`` is issued (see its message for how to silence it).
+    Does not support "&&NHX" style annotations.
 
     See Also
     --------
     parse_comment_metadata_beast2_v2_7_8
     """
-    body = _beast2_v2_7_8_strip_marker(comment)
-    if body is None:
+    _warn_if_nhx_marker(comment, "BEAST2 comment metadata parsers")
+    if comment.startswith("&"):
+        body = comment[1:]
+    else:
         # unrecognized metadata pattern
         return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer_nesting()
