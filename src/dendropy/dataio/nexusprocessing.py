@@ -281,16 +281,10 @@ class NexusTaxonSymbolMapper(object):
 ###############################################################################
 ## Metadata
 
-def _coerce_field_value(value, value_type):
-    if isinstance(value, list):
-        return [_coerce_field_value(v, value_type) for v in value]
-    return value_type(value)
-
 def _comment_metadata_to_annotations(
         metadata,
         annotations=None,
-        field_name_map=None,
-        field_value_types=None):
+        field_name_map=None):
     """
     Converts field name and value pairs, as returned by the
     ``parse_comment_metadata_<suffix>`` functions of this module, into a
@@ -307,11 +301,6 @@ def _comment_metadata_to_annotations(
         ``metadata``) to strings that should be used to represent the
         field in the resulting |Annotation| objects; if not given, no
         mapping is done (i.e., the ``metadata`` key is used directly).
-    ``field_value_types`` : dict
-        A dictionary mapping field names (as given as keys in
-        ``metadata``) to the value type (e.g. {"node-age" : float}),
-        applied element-wise to list values. Nested lists are handled
-        recursively.
 
     Returns
     -------
@@ -322,12 +311,7 @@ def _comment_metadata_to_annotations(
         annotations = set()
     if field_name_map is None:
         field_name_map = {}
-    if field_value_types is None:
-        field_value_types = {}
     for key, value in metadata:
-        value_type = field_value_types.get(key)
-        if value_type is not None:
-            value = _coerce_field_value(value, value_type)
         if key in field_name_map:
             key = field_name_map[key]
         annotations.add(basemodel.Annotation(name=key, value=value))

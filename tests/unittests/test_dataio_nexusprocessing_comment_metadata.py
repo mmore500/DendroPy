@@ -264,21 +264,6 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(
                 annotations_as_dict(annotations), {"substitution_rate": 0.5})
 
-    def test_field_value_types_scalar_and_list(self):
-        annotations = nexusprocessing._comment_metadata_to_annotations(
-                [("rate", 5), ("hpd", [1, 2, 3])],
-                field_value_types={"rate": float, "hpd": float})
-        self.assertEqual(
-                annotations_as_dict(annotations),
-                {"rate": 5.0, "hpd": [1.0, 2.0, 3.0]})
-
-    def test_field_value_types_nested_list(self):
-        annotations = nexusprocessing._comment_metadata_to_annotations(
-                [("hpd", [[1, 2], [3, [4]]])], field_value_types={"hpd": float})
-        self.assertEqual(
-                annotations_as_dict(annotations),
-                {"hpd": [[1.0, 2.0], [3.0, [4.0]]]})
-
     def test_accepts_pairs_with_repeated_field_names(self):
         annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("x", 1), ("x", 2)])
