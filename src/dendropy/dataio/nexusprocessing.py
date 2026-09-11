@@ -353,6 +353,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
 
     See Also
     --------
+    parse_comment_metadata_figtree_v1_4_4
     parse_comment_metadata_beast2_v2_7_8
 
     Notes
@@ -420,6 +421,114 @@ def parse_comment_metadata_to_annotations(
             metadata,
             annotations=annotations,
             field_name_map=field_name_map)
+
+###############################################################################
+## Metadata: FigTree v1.4.4 comment metadata idiom
+##
+## Ported from JEBL's ``NexusImporter.parseMetaCommentPairs()``/
+## ``parseValue()``, pinned to
+## https://github.com/rambaut/jebl2/blob/c5d018e774ba7f62d6e8dadd8d30b631511908a9/src/jebl/evolution/io/NexusImporter.java
+## -- the commit bundled in the FigTree v1.4.4 release (its jebl.jar's
+## ``NexusImporter.class`` is timestamped 2014-06-14, matching this
+## commit's date, and predates jebl2's later nested-array fix, db153a0,
+## Aug 2016).
+
+FIGTREE_V1_4_4_COMMENT_PAIR_PATTERN = re.compile(
+        r'("[^"]*"+|[^,=\s]+)\s*(=\s*(\{[^=}]*\}|"[^"]*"+|[^,]+))?')
+
+def _figtree_v1_4_4_parse_value(raw_value):
+    raw_value = raw_value.strip()
+    if raw_value.startswith("{"):
+        inner = raw_value[1:-1]
+        elements = inner.split(",") if inner else []
+        return [_figtree_v1_4_4_parse_value(element) for element in elements]
+    if raw_value.startswith("#"):
+        color_value = raw_value[1:]
+        try:
+            rgb = int(color_value) if color_value.startswith("-") else int(color_value, 16)
+        except ValueError:
+            pass
+        else:
+            return ((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF)
+    if raw_value.startswith('"') and raw_value.endswith('"'):
+        return raw_value[1:-1]
+    if raw_value.lower() == "true":
+        return True
+    if raw_value.lower() == "false":
+        return False
+    try:
+        parsed_int = int(raw_value)
+    except ValueError:
+        pass
+    else:
+        # Integer.parseInt overflows outside int32 range and falls
+        # through to Double.parseDouble; int() has no such bound
+        if -2147483648 <= parsed_int <= 2147483647:
+            return parsed_int
+    try:
+        return float(raw_value)
+    except ValueError:
+        pass
+    return raw_value
+
+def parse_comment_metadata_figtree_v1_4_4(comment):
+    """
+    Returns the (field name, value) pairs parsed out of a
+    "[&key=value,...]"-style comment, using the comment metadata parsing
+    logic used by FigTree v1.4.4's bundled JEBL ``NexusImporter``.
+
+    May be passed as the ``extract_comment_metadata`` argument of
+    |NewickReader|/|NexusReader|.
+
+    Parameters
+    ----------
+    ``comment`` : string
+        A comment token.
+
+    Returns
+    -------
+    metadata : items view
+        (field name, parsed value) pairs; a field name repeated in the
+        comment keeps only its last value.
+
+    Raises
+    ------
+    ``ValueError``
+        If ``comment`` contains a badly-formatted attribute (e.g. an
+        empty or all-whitespace field name).
+
+    See Also
+    --------
+    parse_comment_metadata_dendropy_v5_0_0
+    parse_comment_metadata_beast2_v2_7_8
+
+    Notes
+    -----
+    Nested list ("vector") values are not supported: parsing continues
+    past the first inner closing brace, so the remainder is re-scanned
+    as further (bogus) key=value pairs.
+    """
+    metadata = {}
+    if comment.startswith("&&"):
+        comment = comment[2:]
+    elif comment.startswith("&"):
+        comment = comment[1:]
+    else:
+        # unrecognized metadata pattern
+        return metadata.items()
+    for match in FIGTREE_V1_4_4_COMMENT_PAIR_PATTERN.finditer(comment):
+        key = match.group(1)
+        if key.startswith('"'):
+            key = key[1:-1]
+        if not key.strip():
+            raise ValueError("Badly formatted attribute: '{}'".format(match.group(0)))
+        value_clause = match.group(2)
+        if value_clause is not None and value_clause.strip():
+            value = _figtree_v1_4_4_parse_value(value_clause[1:])
+        else:
+            value = True
+        metadata[key] = value
+    return metadata.items()
 
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
@@ -548,6 +657,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
+    parse_comment_metadata_figtree_v1_4_4
     """
     if comment.startswith("&&"):
         body = comment[2:]

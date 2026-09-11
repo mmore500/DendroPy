@@ -300,6 +300,7 @@ class NexusReader(ioservice.DataReader):
         --------
 
         :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_dendropy_v5_0_0`
+        :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_figtree_v1_4_4`
         :func:`dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8`
 
         """
