@@ -467,16 +467,15 @@ def _beast2_v2_7_8_unquote(text):
     # BEAST2 tests only the leading quote, then strips both ends
     return text[1:-1] if text[:1] in ("'", '"') else text
 
-def _warn_if_nhx_marker(comment, parser_name):
+def _warn_if_nhx_marker(comment):
     if comment.startswith("&&NHX"):
         warnings.warn(
-                "{} do not support \"&&NHX\" annotations: the marker is"
-                " not stripped. To silence, use an alternate comment"
-                " metadata parser (parse_comment_metadata_dendropy_v5_0_0),"
-                " strip it first (extract_comment_metadata=lambda c:"
-                " parser(re.sub(r'^&&NHX:?', '&', c))), or insert"
-                " whitespace (lambda c: '& ' + c[1:] if"
-                " c.startswith('&&NHX') else c).".format(parser_name))
+                "Parser does not support \"&&NHX\" annotations: the"
+                " marker is not stripped. To silence, use an alternate"
+                " comment metadata parser, strip it first"
+                " (extract_comment_metadata=lambda c: parser(re.sub("
+                " r'^&&NHX:?', '&', c))), or insert whitespace"
+                " (lambda c: '& ' + c[1:] if c.startswith('&&NHX') else c).")
 
 def _beast2_v2_7_8_raw_text(value_tree):
     # BEAST2 skips whitespace in its lexer, so the ``getText()`` that
@@ -606,7 +605,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     parse_comment_metadata_dendropy_v5_0_0
     parse_comment_metadata_beast2_v2_7_8_nesting
     """
-    _warn_if_nhx_marker(comment, "BEAST2 comment metadata parsers")
+    _warn_if_nhx_marker(comment)
     if comment.startswith("&"):
         body = comment[1:]
     else:
@@ -670,7 +669,7 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     --------
     parse_comment_metadata_beast2_v2_7_8
     """
-    _warn_if_nhx_marker(comment, "BEAST2 comment metadata parsers")
+    _warn_if_nhx_marker(comment)
     if comment.startswith("&"):
         body = comment[1:]
     else:
