@@ -486,32 +486,30 @@ def parse_comment_metadata_to_annotations(
 ## %ignore /[ \t\r\n]+/
 ## -----------------------------------------------------------------------
 
-class _Beast2V2_7_8_ValueNode(object):
-    """
-    A parsed ``attribValue``: a number or string leaf, or a vector of
-    child nodes. ``raw`` is the node's whitespace-free source text.
-    """
+def _beast2_v2_7_8_unquote(text):
+    return text[1:-1] if text[:1] in ("'", '"') else text
 
-    __slots__ = ("kind", "raw", "elements")
+def _beast2_v2_7_8_raw_text(value_tree):
+    # as ANTLR's ``getText()`` does for BEAST2, whitespace between tokens
+    # is dropped rather than preserved
+    if value_tree.data == "vector":
+        return "{" + ",".join(
+                _beast2_v2_7_8_raw_text(element)
+                for element in value_tree.children) + "}"
+    return value_tree.children[0].value
 
-    def __init__(self, kind, raw, elements=None):
-        self.kind = kind
-        self.raw = raw
-        self.elements = elements
-
-def _beast2_v2_7_8_materialize_value(value_node):
-    if value_node.kind == "number":
-        return float(value_node.raw)
-    if value_node.kind == "string":
-        raw = value_node.raw
-        return raw[1:-1] if raw[:1] in ("'", '"') else raw
+def _beast2_v2_7_8_materialize_value(value_tree):
+    if value_tree.data == "number":
+        return float(value_tree.children[0].value)
+    if value_tree.data != "vector":
+        return _beast2_v2_7_8_unquote(value_tree.children[0].value)
     # As in ``TreeParser.processMetadata()``, a vector is materialized as
     # floats only if *every* element's raw text parses as one; otherwise
     # raw text is used throughout, nested vectors included.
     try:
-        return [float(element.raw) for element in value_node.elements]
+        return [float(_beast2_v2_7_8_raw_text(e)) for e in value_tree.children]
     except ValueError:
-        return [element.raw for element in value_node.elements]
+        return [_beast2_v2_7_8_raw_text(e) for e in value_tree.children]
 
 @functools.lru_cache(maxsize=None)
 def _beast2_v2_7_8_parser_and_transformer():
@@ -519,40 +517,27 @@ def _beast2_v2_7_8_parser_and_transformer():
     # module is only ever loaded if this parser is actually used
     from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
 
-    class _ToValueNode(standalone.Transformer):
+    # the value rules are deliberately left untransformed: their parse
+    # trees already carry everything materialization needs, as ``data``
+    # (the rule name, i.e. the value's type) and ``Token`` source text
+    class _ToMetadata(standalone.Transformer):
 
         def key(self, children):
             (token,) = children
-            text = token.value
-            return text[1:-1] if text[:1] in ("'", '"') else text
-
-        def number(self, children):
-            (token,) = children
-            return _Beast2V2_7_8_ValueNode("number", token.value)
-
-        def string(self, children):
-            (token,) = children
-            return _Beast2V2_7_8_ValueNode("string", token.value)
-
-        dqstring = string
-        sqstring = string
-
-        def vector(self, children):
-            raw = "{" + ",".join(child.raw for child in children) + "}"
-            return _Beast2V2_7_8_ValueNode("vector", raw, elements=list(children))
+            return _beast2_v2_7_8_unquote(token.value)
 
         def attrib(self, children):
-            key, value_node = children
-            return key, _beast2_v2_7_8_materialize_value(value_node)
+            key, value_tree = children
+            return key, _beast2_v2_7_8_materialize_value(value_tree)
 
         def attribs(self, children):
             return list(children)
 
         def start(self, children):
             (attribs,) = children
-            return attribs
+            return dict(attribs)
 
-    return standalone, standalone.Lark_StandAlone(), _ToValueNode()
+    return standalone, standalone.Lark_StandAlone(), _ToMetadata()
 
 def parse_comment_metadata_beast2_v2_7_8(comment):
     """
@@ -598,7 +583,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
         return {}
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
-        return dict(transformer.transform(parser.parse(body)))
+        return transformer.transform(parser.parse(body))
     except standalone.UnexpectedInput as e:
         raise ValueError(
                 "Malformed BEAST2-style metadata comment: {}".format(e)) from e
