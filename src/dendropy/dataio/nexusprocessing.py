@@ -328,7 +328,8 @@ def comment_metadata_to_annotations(
         value_type = field_value_types.get(key)
         if value_type is not None:
             value = _coerce_field_value(value, value_type)
-        key = field_name_map.get(key, key)
+        if key in field_name_map:
+            key = field_name_map[key]
         annotations.add(basemodel.Annotation(name=key, value=value))
     return annotations
 
