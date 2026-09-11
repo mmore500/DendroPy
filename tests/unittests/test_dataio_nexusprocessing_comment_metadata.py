@@ -66,21 +66,22 @@ class DendroPyV5_0_0CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase
     def test_simple_scalar_values(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
                 "&rate=0.5,label=foo")
-        self.assertEqual(d, {"rate": "0.5", "label": "foo"})
+        self.assertEqual(d, [("rate", "0.5"), ("label", "foo")])
 
     def test_quoted_and_boolean_values(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
                 '&name="hello world",flag=true,off=FALSE')
-        self.assertEqual(d, {"name": "hello world", "flag": True, "off": False})
+        self.assertEqual(
+                d, [("name", "hello world"), ("flag", True), ("off", False)])
 
     def test_single_level_vector(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0("&x={1,2,3}")
-        self.assertEqual(d, {"x": ["1", "2", "3"]})
+        self.assertEqual(d, [("x", ["1", "2", "3"])])
 
     def test_nhx_format(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
                 "&&NHX:S=human:E=1.1.1.1")
-        self.assertEqual(d, {"S": "human", "E": "1.1.1.1"})
+        self.assertEqual(d, [("S", "human"), ("E", "1.1.1.1")])
 
     def test_nhx_format_with_explicit_prefix(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
@@ -91,22 +92,26 @@ class DendroPyV5_0_0CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase
     def test_field_value_types_scalar(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
                 "&age=5", field_value_types={"age": float})
-        self.assertEqual(d, {"age": 5.0})
+        self.assertEqual(d, [("age", 5.0)])
 
     def test_field_value_types_vector(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
                 "&x={1,2,3}", field_value_types={"x": int})
-        self.assertEqual(d, {"x": [1, 2, 3]})
+        self.assertEqual(d, [("x", [1, 2, 3])])
+
+    def test_repeated_field_names_are_all_kept(self):
+        d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0("&x=1,x=2,y=9")
+        self.assertEqual(d, [("x", "1"), ("x", "2"), ("y", "9")])
 
     def test_unrecognized_comment_returns_empty(self):
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0("just a comment")
-        self.assertEqual(d, {})
+        self.assertEqual(d, [])
 
     def test_issue_145_nested_list_is_mis_parsed(self):
         # Regression-locks the originally-reported bug: the outer vector
         # value is truncated at the first (inner) closing brace.
         d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(ISSUE_145_COMMENT)
-        self.assertEqual(d["history_all"], ["{57", "0.08", "C", "T"])
+        self.assertEqual(d, [("history_all", ["{57", "0.08", "C", "T"])])
 
 
 class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.ExtendedTestCase):
@@ -129,6 +134,13 @@ class ParseCommentMetadataToAnnotationsBackwardCompatTestCase(dendropytest.Exten
         annotations = nexusprocessing.parse_comment_metadata_to_annotations(
                 "&x={1,2,3}", field_value_types={"x": int})
         self.assertEqual(annotations_as_dict(annotations), {"x": [1, 2, 3]})
+
+    def test_repeated_field_names_yield_one_annotation_each(self):
+        annotations = nexusprocessing.parse_comment_metadata_to_annotations(
+                "&x=1,x=2,y=9")
+        self.assertEqual(
+                sorted((a.name, a.value) for a in annotations),
+                [("x", "1"), ("x", "2"), ("y", "9")])
 
     def test_accumulates_into_existing_set(self):
         existing = nexusprocessing.parse_comment_metadata_to_annotations("&a=1")
@@ -256,6 +268,13 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(
                 annotations_as_dict(annotations),
                 {"hpd": [[1.0, 2.0], [3.0, [4.0]]]})
+
+    def test_accepts_pairs_with_repeated_field_names(self):
+        annotations = nexusprocessing.comment_metadata_to_annotations(
+                [("x", 1), ("x", 2)])
+        self.assertEqual(
+                sorted((a.name, a.value) for a in annotations),
+                [("x", 1), ("x", 2)])
 
     def test_empty_dict_yields_no_annotations(self):
         annotations = nexusprocessing.comment_metadata_to_annotations({})

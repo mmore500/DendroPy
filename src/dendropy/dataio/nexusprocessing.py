@@ -292,14 +292,15 @@ def comment_metadata_to_annotations(
         field_name_map=None,
         field_value_types=None):
     """
-    Converts a dictionary of field name to value pairs, as returned by
-    the ``parse_comment_metadata_<suffix>`` functions of this module,
-    into a set of |Annotation| objects.
+    Converts field name and value pairs, as returned by the
+    ``parse_comment_metadata_<suffix>`` functions of this module, into a
+    set of |Annotation| objects.
 
     Parameters
     ----------
-    ``metadata`` : dict
-        A dictionary mapping field name to value.
+    ``metadata`` : list or dict
+        A sequence of (field name, value) pairs, or a dictionary
+        mapping field name to value.
     ``annotations`` : |AnnotationSet| or ``set``
         Set of |Annotation| objects to which to add these annotations.
     ``field_name_map`` : dict
@@ -323,7 +324,9 @@ def comment_metadata_to_annotations(
         field_name_map = {}
     if field_value_types is None:
         field_value_types = {}
-    for key, value in metadata.items():
+    if hasattr(metadata, "items"):
+        metadata = metadata.items()
+    for key, value in metadata:
         value_type = field_value_types.get(key)
         if value_type is not None:
             value = _coerce_field_value(value, value_type)
@@ -342,7 +345,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
         field_value_types=None,
         strip_leading_trailing_spaces=True):
     """
-    Returns a dictionary of field name to value pairs parsed out of a
+    Returns a list of (field name, value) pairs parsed out of a
     "[&key=value,...]" (FigTree/BEAST-style) or "[&&NHX:key=value:...]"
     (New Hampshire Extended-style) comment, using the comment metadata
     parsing logic used by DendroPy v5.0.0.
@@ -361,8 +364,9 @@ def parse_comment_metadata_dendropy_v5_0_0(
 
     Returns
     -------
-    metadata : dict
-        Dictionary of field name to (parsed) value.
+    metadata : list
+        List of (field name, parsed value) pairs, in comment order; a
+        field name repeated in the comment is repeated here.
 
     See Also
     --------
@@ -374,7 +378,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
     parsed correctly: the outer braces are matched only up to the first
     inner closing brace.
     """
-    metadata = {}
+    metadata = []
     if field_value_types is None:
         field_value_types = {}
     if comment.startswith("&&NHX:"):
@@ -409,7 +413,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
         else:
             if value_type is not None:
                 val = value_type(val)
-        metadata[key] = val
+        metadata.append((key, val))
     return metadata
 
 def parse_comment_metadata_to_annotations(

@@ -228,9 +228,9 @@ class NexusReader(ioservice.DataReader):
             parsed, but will be instead stored directly as elements of
             the ``comments`` list attribute of the associated object.
             A callable may be given instead: it will be called with a
-            single comment token string and must return a ``dict``
-            mapping field name to value, which is then converted into
-            |Annotation| objects.
+            single comment token string and must return a list of
+            (field name, value) pairs, or a ``dict`` mapping field name
+            to value, which is then converted into |Annotation| objects.
         store_tree_weights : boolean, default: |False|
             If |True|, process the tree weight (e.g. "[&W 1/2]") comment
             associated with each tree, if any. Defaults to |False|.
