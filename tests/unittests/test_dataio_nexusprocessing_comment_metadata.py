@@ -30,6 +30,7 @@ annotations, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
 import sys
 import os
 import unittest
+import warnings
 import dendropy
 from dendropy.dataio import nexusprocessing
 
@@ -213,10 +214,22 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 
     def test_double_ampersand_warns_and_is_not_stripped(self):
         # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0
-        with self.assertWarns(UserWarning):
+        with self.assertWarns(nexusprocessing.Beast2DoubleAmpersandWarning):
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                     "&&subject='Pythonidae'")
         self.assertEqual(list(d), [("&subject", "Pythonidae")])
+
+    def test_double_ampersand_warning_filter_is_configurable(self):
+        # same DENDROPY_BEAST2_DOUBLE_AMPERSAND_WARNINGS-backed filter
+        # mechanism as dendropy.utility.deprecate's deprecation warnings
+        self.addCleanup(
+                nexusprocessing.configure_beast2_double_ampersand_warning_behavior,
+                "default")
+        nexusprocessing.configure_beast2_double_ampersand_warning_behavior("ignore")
+        with warnings.catch_warnings(record=True) as caught:
+            nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
+                    "&&subject='Pythonidae'")
+        self.assertEqual(caught, [])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
@@ -320,7 +333,7 @@ class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTes
         self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
     def test_double_ampersand_warns_and_is_not_stripped(self):
-        with self.assertWarns(UserWarning):
+        with self.assertWarns(nexusprocessing.Beast2DoubleAmpersandWarning):
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
                     "&&subject='Pythonidae'")
         self.assertEqual(list(d), [("&subject", "Pythonidae")])
