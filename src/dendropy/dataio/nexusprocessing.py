@@ -492,31 +492,14 @@ def _beast2_v2_7_8_materialize_value(value_tree):
         except ValueError:
             return [_beast2_v2_7_8_raw_text(e) for e in value_tree.children]
 
-def _beast2_v2_7_8_materialize_numeric_nesting(value_tree):
-    # raises ValueError unless value_tree is, recursively, a number or a
-    # vector whose elements are all numbers or all-numeric vectors
-    if value_tree.data == "number":
-        return float(value_tree.children[0].value)
-    elif value_tree.data == "vector":
-        return [
-                _beast2_v2_7_8_materialize_numeric_nesting(e)
-                for e in value_tree.children]
-    else:
-        raise ValueError
-
 def _beast2_v2_7_8_materialize_value_nesting(value_tree):
     if value_tree.data == "number":
         return float(value_tree.children[0].value)
     elif value_tree.data == "vector":
         # recurses into vector elements instead of using their raw text
-        try:
-            return [
-                    _beast2_v2_7_8_materialize_numeric_nesting(e)
-                    for e in value_tree.children]
-        except ValueError:
-            return [
-                    _beast2_v2_7_8_materialize_value_nesting(e)
-                    for e in value_tree.children]
+        return [
+                _beast2_v2_7_8_materialize_value_nesting(e)
+                for e in value_tree.children]
     else:
         return _beast2_v2_7_8_unquote(value_tree.children[0].value)
 
@@ -637,12 +620,12 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     materializes nested vectors instead of preserving them as raw
     bracketed text.
 
-    At each level of nesting, a vector becomes a (possibly nested) list
-    of ``float`` if every one of its elements is itself a number or a
-    recursively all-numeric vector; otherwise each element is
-    materialized independently, so a vector mixing numbers and strings
-    gets individually-typed elements rather than one flat list of raw
-    text, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}`` becomes
+    Each element of a vector is materialized independently and
+    recursively (a number becomes ``float``, a string is unquoted, and
+    a nested vector is materialized the same way), so a vector mixing
+    numbers and strings gets individually-typed elements rather than
+    one flat list of raw text, e.g.
+    ``history_all={{57,0.08,C,T},{134,0.079,A,G}}`` becomes
     ``[[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]`` instead of
     ``['{57,0.08,C,T}', '{134,0.079,A,G}']``.
 
