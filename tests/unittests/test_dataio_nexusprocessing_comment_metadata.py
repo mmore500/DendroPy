@@ -318,6 +318,19 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
                 result["B"]["history_all"],
                 ["{57,0.08,C,T}", "{134,0.079,A,G}"])
 
+    def test_annotations_follow_comment_order(self):
+        # annotation order is stable from run to run: the metadata dict
+        # is applied to the target set directly, rather than by way of
+        # an intermediate (unordered) ``set``
+        tree = dendropy.Tree.get(
+                data="(A[&aa=1,bb=2,cc=3,dd=4,ee=5,ff=6]:1,B:1);",
+                schema="newick")
+        for nd in tree:
+            if nd.taxon is not None and nd.taxon.label == "A":
+                self.assertEqual(
+                        [a.name for a in nd.annotations],
+                        ["aa", "bb", "cc", "dd", "ee", "ff"])
+
     def test_custom_user_callable(self):
         def my_parser(comment):
             return {"raw": comment}

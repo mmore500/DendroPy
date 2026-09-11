@@ -464,8 +464,8 @@ class NewickReader(ioservice.DataReader):
             elif parse_fn is not None and comment.startswith("&"):
                 metadata = parse_fn(comment)
                 if metadata:
-                    tree.annotations.update(
-                            nexusprocessing.comment_metadata_to_annotations(metadata))
+                    nexusprocessing.comment_metadata_to_annotations(
+                            metadata, annotations=tree.annotations)
                 else:
                     tree.comments.append(comment)
             else:

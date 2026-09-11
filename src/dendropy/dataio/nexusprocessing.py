@@ -520,21 +520,19 @@ def _beast2_v2_7_8_parser_and_transformer():
     # the value rules are deliberately left untransformed: their parse
     # trees already carry everything materialization needs, as ``data``
     # (the rule name, i.e. the value's type) and ``Token`` source text
+    @standalone.v_args(inline=True)
     class _ToMetadata(standalone.Transformer):
 
-        def key(self, children):
-            (token,) = children
+        def key(self, token):
             return _beast2_v2_7_8_unquote(token.value)
 
-        def attrib(self, children):
-            key, value_tree = children
+        def attrib(self, key, value_tree):
             return key, _beast2_v2_7_8_materialize_value(value_tree)
 
-        def attribs(self, children):
-            return list(children)
+        def attribs(self, *attribs):
+            return attribs
 
-        def start(self, children):
-            (attribs,) = children
+        def start(self, attribs):
             return dict(attribs)
 
     return standalone, standalone.Lark_StandAlone(), _ToMetadata()
@@ -608,7 +606,8 @@ def process_comments_for_item(item,
         if parse_fn is not None and comment.startswith("&"):
             metadata = parse_fn(comment)
             if metadata:
-                item.annotations.update(comment_metadata_to_annotations(metadata))
+                comment_metadata_to_annotations(
+                        metadata, annotations=item.annotations)
             else:
                 item.comments.append(comment)
         else:
