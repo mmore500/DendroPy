@@ -622,14 +622,11 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
 
     Each element of a vector is materialized independently and
     recursively (a number becomes ``float``, a string is unquoted, and
-    a nested vector is materialized the same way). This applies to any
-    vector containing a vector, numeric-only nesting included, unlike
-    the base parser, which falls back to raw text for both: e.g.
-    ``x={{1,2},{3,4}}`` becomes ``[[1.0, 2.0], [3.0, 4.0]]`` (not
-    ``['{1,2}', '{3,4}']``), and
-    ``history_all={{57,0.08,C,T},{134,0.079,A,G}}`` becomes
-    ``[[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]`` (not
-    ``['{57,0.08,C,T}', '{134,0.079,A,G}']``).
+    a nested vector is materialized the same way), so a vector
+    containing a vector gets real nested structure instead of raw
+    text, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}`` becomes
+    ``[[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]`` instead of
+    ``['{57,0.08,C,T}', '{134,0.079,A,G}']``.
 
     See :func:`parse_comment_metadata_beast2_v2_7_8` for a faithful
     implementation of BEAST2's own restrictions.
