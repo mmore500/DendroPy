@@ -354,6 +354,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
     See Also
     --------
     parse_comment_metadata_beast2_v2_7_8
+    parse_comment_metadata_beast2_v2_7_8_nesting
 
     Notes
     -----
@@ -589,7 +590,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     Parameters
     ----------
     ``comment`` : string
-        A comment token. Whitespace is insignificant except within
+        A comment token. Whitespace is ignored except within
         quoted strings.
 
     Returns
@@ -671,7 +672,7 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     Parameters
     ----------
     ``comment`` : string
-        A comment token. Whitespace is insignificant except within
+        A comment token. Whitespace is ignored except within
         quoted strings.
 
     Returns
