@@ -523,13 +523,13 @@ def _beast2_v2_7_8_parser_and_transformer():
         def start(self, attribs):
             # BEAST2 calls node.setMetaData() per attribute, so a
             # repeated field name keeps only its last value
-            return list(dict(attribs).items())
+            return dict(attribs)
 
     return standalone, standalone.Lark_StandAlone(), _ToMetadata()
 
 def parse_comment_metadata_beast2_v2_7_8(comment):
     """
-    Returns a list of (field name, value) pairs parsed out of a
+    Returns the (field name, value) pairs parsed out of a
     "[&key=value,...]"-style comment, using the comment metadata parsing
     logic used by BEAST2 v2.7.8 (``TreeParser``), which handles nested
     list ("vector") values, e.g. ``x={{1,2},{3,4}}``, correctly.
@@ -545,9 +545,9 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Returns
     -------
-    metadata : list
-        List of (field name, parsed value) pairs; a field name repeated
-        in the comment keeps only its last value.
+    metadata : items view
+        (field name, parsed value) pairs; a field name repeated in the
+        comment keeps only its last value.
 
     Raises
     ------
@@ -565,10 +565,10 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
         body = comment[1:]
     else:
         # unrecognized metadata pattern
-        return []
+        return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
-        return transformer.transform(parser.parse(body))
+        return transformer.transform(parser.parse(body)).items()
     except standalone.UnexpectedInput as e:
         raise ValueError(
                 "Malformed BEAST2-style metadata comment: {}".format(e)) from e

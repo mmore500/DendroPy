@@ -162,11 +162,11 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 '&rate=0.0123,label="hello",tag=bareword')
         self.assertEqual(
-                d, [("rate", 0.0123), ("label", "hello"), ("tag", "bareword")])
+                list(d), [("rate", 0.0123), ("label", "hello"), ("tag", "bareword")])
 
     def test_single_quoted_value(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&label='hello'")
-        self.assertEqual(d, [("label", "hello")])
+        self.assertEqual(list(d), [("label", "hello")])
 
     def test_negative_and_scientific_notation_numbers(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
@@ -176,48 +176,49 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 
     def test_all_numeric_vector(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&hpd={1.1,2.2,3.3}")
-        self.assertEqual(d, [("hpd", [1.1, 2.2, 3.3])])
+        self.assertEqual(list(d), [("hpd", [1.1, 2.2, 3.3])])
 
     def test_mixed_vector_falls_back_to_raw_text(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&x={1,"a"}')
-        self.assertEqual(d, [("x", ["1", '"a"'])])
+        self.assertEqual(list(d), [("x", ["1", '"a"'])])
 
     def test_string_only_vector_falls_back_to_raw_text(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={C,T,A,G}")
-        self.assertEqual(d, [("x", ["C", "T", "A", "G"])])
+        self.assertEqual(list(d), [("x", ["C", "T", "A", "G"])])
 
     def test_nested_vector_resolves_issue_145(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(ISSUE_145_COMMENT)
         self.assertEqual(
-                d,
+                list(d),
                 [("history_all",
                   ["{57,0.08,C,T}", "{134,0.079,A,G}", "{4,0.07,C,T}"])])
 
     def test_doubly_nested_vector(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={{{1,2},{3,4}},{5,6}}")
-        self.assertEqual(d, [("x", ["{{1,2},{3,4}}", "{5,6}"])])
+        self.assertEqual(list(d), [("x", ["{{1,2},{3,4}}", "{5,6}"])])
 
     def test_whitespace_is_tolerated(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 "& rate = 0.5 , hpd = { 1.1 , 2.2 } ")
-        self.assertEqual(d, [("rate", 0.5), ("hpd", [1.1, 2.2])])
+        self.assertEqual(list(d), [("rate", 0.5), ("hpd", [1.1, 2.2])])
 
     def test_quoting_protects_whitespace(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&" a key "=1')
-        self.assertEqual(d, [(" a key ", 1.0)])
+        self.assertEqual(list(d), [(" a key ", 1.0)])
 
     def test_empty_comment_returns_empty(self):
-        self.assertEqual(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&"), [])
+        self.assertEqual(
+                list(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&")), [])
 
     def test_repeated_field_names_keep_the_last_value(self):
         # BEAST2 calls node.setMetaData() per attribute, so a repeated
         # field name overwrites rather than accumulating
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x=1,x=2,y=9")
-        self.assertEqual(d, [("x", 2.0), ("y", 9.0)])
+        self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
     def test_unrecognized_comment_returns_empty(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("not a metadata comment")
-        self.assertEqual(d, [])
+        self.assertEqual(list(d), [])
 
     def test_malformed_missing_value_raises(self):
         with self.assertRaises(ValueError):
