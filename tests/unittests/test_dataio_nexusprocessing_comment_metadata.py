@@ -214,18 +214,18 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 
     def test_double_ampersand_warns_and_is_not_stripped(self):
         # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0
-        with self.assertWarns(nexusprocessing.Beast2DoubleAmpersandWarning):
+        with self.assertWarns(nexusprocessing.Beast2NHXMarkerWarning):
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                     "&&subject='Pythonidae'")
         self.assertEqual(list(d), [("&subject", "Pythonidae")])
 
-    def test_double_ampersand_warning_filter_is_configurable(self):
-        # same DENDROPY_BEAST2_DOUBLE_AMPERSAND_WARNINGS-backed filter
+    def test_nhx_marker_warning_filter_is_configurable(self):
+        # same DENDROPY_BEAST2_NHX_MARKER_WARNINGS-backed filter
         # mechanism as dendropy.utility.deprecate's deprecation warnings
         self.addCleanup(
-                nexusprocessing.configure_beast2_double_ampersand_warning_behavior,
+                nexusprocessing.configure_beast2_nhx_marker_warning_behavior,
                 "default")
-        nexusprocessing.configure_beast2_double_ampersand_warning_behavior("ignore")
+        nexusprocessing.configure_beast2_nhx_marker_warning_behavior("ignore")
         with warnings.catch_warnings(record=True) as caught:
             nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                     "&&subject='Pythonidae'")
@@ -333,7 +333,7 @@ class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTes
         self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
     def test_double_ampersand_warns_and_is_not_stripped(self):
-        with self.assertWarns(nexusprocessing.Beast2DoubleAmpersandWarning):
+        with self.assertWarns(nexusprocessing.Beast2NHXMarkerWarning):
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
                     "&&subject='Pythonidae'")
         self.assertEqual(list(d), [("&subject", "Pythonidae")])

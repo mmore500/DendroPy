@@ -469,39 +469,39 @@ def _beast2_v2_7_8_unquote(text):
     # BEAST2 tests only the leading quote, then strips both ends
     return text[1:-1] if text[:1] in ("'", '"') else text
 
-class Beast2DoubleAmpersandWarning(UserWarning):
+class Beast2NHXMarkerWarning(UserWarning):
     pass
 
-BEAST2_DOUBLE_AMPERSAND_WARNING_FILTER = None
-_BEAST2_DOUBLE_AMPERSAND_WARNINGS_CONFIGURED = False
+BEAST2_NHX_MARKER_WARNING_FILTER = None
+_BEAST2_NHX_MARKER_WARNINGS_CONFIGURED = False
 
-def configure_beast2_double_ampersand_warning_behavior(warning_filter=None):
-    global BEAST2_DOUBLE_AMPERSAND_WARNING_FILTER
-    global _BEAST2_DOUBLE_AMPERSAND_WARNINGS_CONFIGURED
+def configure_beast2_nhx_marker_warning_behavior(warning_filter=None):
+    global BEAST2_NHX_MARKER_WARNING_FILTER
+    global _BEAST2_NHX_MARKER_WARNINGS_CONFIGURED
     if warning_filter is None:
         warning_filter = os.environ.get(
-                metavar.BEAST2_DOUBLE_AMPERSAND_WARNING_FILTER, "default")
-    BEAST2_DOUBLE_AMPERSAND_WARNING_FILTER = warning_filter
-    warnings.simplefilter(BEAST2_DOUBLE_AMPERSAND_WARNING_FILTER,
-            Beast2DoubleAmpersandWarning)
-    _BEAST2_DOUBLE_AMPERSAND_WARNINGS_CONFIGURED = True
+                metavar.BEAST2_NHX_MARKER_WARNING_FILTER, "default")
+    BEAST2_NHX_MARKER_WARNING_FILTER = warning_filter
+    warnings.simplefilter(BEAST2_NHX_MARKER_WARNING_FILTER,
+            Beast2NHXMarkerWarning)
+    _BEAST2_NHX_MARKER_WARNINGS_CONFIGURED = True
 
-def _initialize_beast2_double_ampersand_warnings():
-    if not _BEAST2_DOUBLE_AMPERSAND_WARNINGS_CONFIGURED:
-        configure_beast2_double_ampersand_warning_behavior()
+def _initialize_beast2_nhx_marker_warnings():
+    if not _BEAST2_NHX_MARKER_WARNINGS_CONFIGURED:
+        configure_beast2_nhx_marker_warning_behavior()
 
 def _beast2_v2_7_8_strip_marker(comment):
     # returns None for an unrecognized comment; real BEAST2's lexer only
     # ever strips a single leading "&" (OPENA is literally "[&"), so a
     # second "&" is left to lex as part of the first attribute's key
     if comment.startswith("&&"):
-        _initialize_beast2_double_ampersand_warnings()
+        _initialize_beast2_nhx_marker_warnings()
         warnings.warn(
                 "BEAST2 comment metadata parsers do not treat a leading"
                 " \"&&\" as an NHX-style marker: the second \"&\" is parsed"
                 " as part of the first attribute's key, matching real"
                 " BEAST2's lexer.",
-                category=Beast2DoubleAmpersandWarning)
+                category=Beast2NHXMarkerWarning)
     if comment.startswith("&"):
         return comment[1:]
     else:
@@ -630,9 +630,9 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     -----
     A leading "&&" is not treated as an NHX-style marker: only a single
     leading "&" is stripped, matching real BEAST2's own lexer, and a
-    :class:`Beast2DoubleAmpersandWarning` is issued. Its filter can be
-    set via the ``DENDROPY_BEAST2_DOUBLE_AMPERSAND_WARNINGS`` environment
-    variable or :func:`configure_beast2_double_ampersand_warning_behavior`.
+    :class:`Beast2NHXMarkerWarning` is issued. Its filter can be
+    set via the ``DENDROPY_BEAST2_NHX_MARKER_WARNINGS`` environment
+    variable or :func:`configure_beast2_nhx_marker_warning_behavior`.
 
     See Also
     --------
@@ -697,9 +697,9 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     -----
     A leading "&&" is not treated as an NHX-style marker: only a single
     leading "&" is stripped, matching real BEAST2's own lexer, and a
-    :class:`Beast2DoubleAmpersandWarning` is issued. Its filter can be
-    set via the ``DENDROPY_BEAST2_DOUBLE_AMPERSAND_WARNINGS`` environment
-    variable or :func:`configure_beast2_double_ampersand_warning_behavior`.
+    :class:`Beast2NHXMarkerWarning` is issued. Its filter can be
+    set via the ``DENDROPY_BEAST2_NHX_MARKER_WARNINGS`` environment
+    variable or :func:`configure_beast2_nhx_marker_warning_behavior`.
 
     See Also
     --------
