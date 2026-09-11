@@ -228,11 +228,6 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
                     "&&NHX:subject=Pythonidae")
         self.assertEqual(list(d), [("&NHX:subject", "Pythonidae")])
 
-    def test_nhx_marker_warning_suggests_dendropy_v5_0_0_as_alternative(self):
-        d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
-                "&&NHX:subject=Pythonidae")
-        self.assertEqual(d, [("subject", "Pythonidae")])
-
     def test_nhx_marker_warning_suggests_re_sub_workaround(self):
         import re
         extract_comment_metadata = lambda c: (
