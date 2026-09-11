@@ -213,8 +213,6 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(list(d), [("'a key'", 1.0)])
 
     def test_bare_double_ampersand_is_not_stripped_and_does_not_warn(self):
-        # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0;
-        # only an "&&NHX" marker (real NHX syntax) warns, not a bare "&&"
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
