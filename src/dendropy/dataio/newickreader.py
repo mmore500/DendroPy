@@ -462,7 +462,9 @@ class NewickReader(ioservice.DataReader):
                     exc.__cause__ = None # Python 3.3, 3.4
                     raise exc
             elif metacomment_parse_fn is not None and comment.startswith("&"):
-                metadata = metacomment_parse_fn(comment)
+                # materialized so that an emptiness test is safe for any
+                # iterable, a generator included
+                metadata = list(metacomment_parse_fn(comment))
                 if metadata:
                     nexusprocessing._comment_metadata_to_annotations(
                             metadata, annotations=tree.annotations)

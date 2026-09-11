@@ -354,6 +354,19 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
         result = self._annotations_by_taxon_label(tree)
         self.assertEqual(result["A"]["raw"], "&rate=0.5,hpd={1.1,2.2}")
 
+    def test_custom_callable_returning_generator(self):
+        # a generator is always truthy, so the emptiness test must look
+        # at the pairs themselves rather than the iterable
+        def empty_gen(comment):
+            return (x for x in [])
+        tree = dendropy.Tree.get(
+                data=self.NEWICK_STR, schema="newick",
+                extract_comment_metadata=empty_gen)
+        for nd in tree:
+            if nd.taxon is not None and nd.taxon.label == "A":
+                self.assertEqual(len(nd.annotations), 0)
+                self.assertEqual(len(nd.comments), 1)
+
     def test_custom_callable_returning_empty_dict_falls_back_to_comments(self):
         # when metadata extraction yields nothing, the raw comment is
         # kept (as a plain comment) rather than silently dropped
