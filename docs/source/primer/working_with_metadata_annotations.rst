@@ -239,6 +239,43 @@ The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8
     history_all = ['{57,0.08,C,T}', '{134,0.079,A,G}']
 
 You can also supply your own callable, so long as it accepts a single comment string argument (e.g. ``"&rate=0.1"``) and returns an iterable of (field name, value) pairs.
+Such a callable can wrap one of the built-in parsers to post-process the (field name, value) pairs it returns, for example to rename fields::
+
+    >>> key_map = {"rate": "substitution_rate", "history_all": "transition_history"}
+    >>> extract_comment_metadata = lambda comment: [
+    ... (key_map.get(k, k), v)
+    ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
+    ... ]
+    >>> tree = dendropy.Tree.get(
+    ... data="((A[&rate=0.1,history_all={{57,0.08,C,T},{134,0.079,A,G}}]:1.0,B:1.0):1.0,C:1.0);",
+    ... schema="newick",
+    ... extract_comment_metadata=extract_comment_metadata,
+    ... )
+    >>> leaf_a = tree.find_node_with_taxon_label("A")
+    >>> for a in leaf_a.annotations:
+    ...     print("%s = %s" % (a.name, a.value))
+    substitution_rate = 0.1
+    transition_history = ['{57,0.08,C,T}', '{134,0.079,A,G}']
+
+or to cast field values to application-specific types::
+
+    >>> value_casts = {"significant": lambda v: v.lower() in ("yes", "true")}
+    >>> extract_comment_metadata = lambda comment: [
+    ... (k, value_casts.get(k, lambda x: x)(v))
+    ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
+    ... ]
+    >>> tree = dendropy.Tree.get(
+    ... data="((A[&rate=0.1,significant=yes]:1.0,B:1.0):1.0,C:1.0);",
+    ... schema="newick",
+    ... extract_comment_metadata=extract_comment_metadata,
+    ... )
+    >>> leaf_a = tree.find_node_with_taxon_label("A")
+    >>> for a in leaf_a.annotations:
+    ...     print("%s = %r" % (a.name, a.value))
+    rate = 0.1
+    significant = True
+
+In both cases, fields not named in the dictionary pass through unchanged, courtesy of ``dict.get()``'s default argument.
 
 
 Direct Composition with Literal Values
