@@ -280,13 +280,6 @@ class NexusTaxonSymbolMapper(object):
 
 ###############################################################################
 ## Metadata
-##
-## Each ``parse_comment_metadata_<suffix>`` function parses a comment
-## token into a ``dict`` of field name to value, following the comment
-## metadata idiom of the tool/version named by its suffix; any of them
-## may be passed as ``extract_comment_metadata``. The resulting ``dict``
-## is converted to |Annotation| objects by
-## ``comment_metadata_to_annotations``.
 
 def _coerce_field_value(value, value_type):
     if isinstance(value, list):
@@ -299,18 +292,16 @@ def comment_metadata_to_annotations(
         field_name_map=None,
         field_value_types=None):
     """
-    Converts a dictionary of field name to value pairs -- e.g., as
-    returned by :func:`parse_comment_metadata_dendropy_v5_0_0` or one of
-    the other ``parse_comment_metadata_<suffix>`` functions in this
-    module -- into a set of |Annotation| objects.
+    Converts a dictionary of field name to value pairs, as returned by
+    the ``parse_comment_metadata_<suffix>`` functions of this module,
+    into a set of |Annotation| objects.
 
     Parameters
     ----------
     ``metadata`` : dict
         A dictionary mapping field name to value.
     ``annotations`` : |AnnotationSet| or ``set``
-        Set of |Annotation| objects to which to add the annotations
-        constructed from ``metadata``.
+        Set of |Annotation| objects to which to add these annotations.
     ``field_name_map`` : dict
         A dictionary mapping field names (as given as keys in
         ``metadata``) to strings that should be used to represent the
@@ -318,10 +309,8 @@ def comment_metadata_to_annotations(
         mapping is done (i.e., the ``metadata`` key is used directly).
     ``field_value_types`` : dict
         A dictionary mapping field names (as given as keys in
-        ``metadata``) to a callable used to coerce the corresponding
-        value (e.g. ``{"node-age": float}``). If the value associated
-        with a field is a list, the callable is applied to each element
-        of the list.
+        ``metadata``) to the value type (e.g. {"node-age" : float}),
+        applied element-wise to list values.
 
     Returns
     -------
@@ -335,10 +324,10 @@ def comment_metadata_to_annotations(
     if field_value_types is None:
         field_value_types = {}
     for key, value in metadata.items():
-        if key in field_value_types:
-            value = _coerce_field_value(value, field_value_types[key])
-        if key in field_name_map:
-            key = field_name_map[key]
+        value_type = field_value_types.get(key)
+        if value_type is not None:
+            value = _coerce_field_value(value, value_type)
+        key = field_name_map.get(key, key)
         annotations.add(basemodel.Annotation(name=key, value=value))
     return annotations
 
@@ -357,12 +346,6 @@ def parse_comment_metadata_dendropy_v5_0_0(
     "[&key=value,...]" (FigTree/BEAST-style) or "[&&NHX:key=value:...]"
     (New Hampshire Extended-style) comment, using the comment metadata
     parsing logic used by DendroPy v5.0.0.
-
-    Known limitation: list ("vector") values that are themselves nested,
-    e.g. ``x={{1,2},{3,4}}``, are not handled correctly -- the outer
-    braces are matched only up to the first inner closing brace. See
-    :func:`parse_comment_metadata_beast2_v2_7_8` for correct nested-list
-    support.
 
     Parameters
     ----------
@@ -384,6 +367,12 @@ def parse_comment_metadata_dendropy_v5_0_0(
     See Also
     --------
     parse_comment_metadata_beast2_v2_7_8
+
+    Notes
+    -----
+    Nested list ("vector") values, e.g. ``x={{1,2},{3,4}}``, are not
+    parsed correctly: the outer braces are matched only up to the first
+    inner closing brace.
     """
     metadata = {}
     if field_value_types is None:
@@ -490,8 +479,7 @@ def _beast2_v2_7_8_unquote(text):
     return text[1:-1] if text[:1] in ("'", '"') else text
 
 def _beast2_v2_7_8_raw_text(value_tree):
-    # as ANTLR's ``getText()`` does for BEAST2, whitespace between tokens
-    # is dropped rather than preserved
+    # whitespace between tokens is dropped, as ANTLR's ``getText()`` does
     if value_tree.data == "vector":
         return "{" + ",".join(
                 _beast2_v2_7_8_raw_text(element)
@@ -503,9 +491,9 @@ def _beast2_v2_7_8_materialize_value(value_tree):
         return float(value_tree.children[0].value)
     if value_tree.data != "vector":
         return _beast2_v2_7_8_unquote(value_tree.children[0].value)
-    # As in ``TreeParser.processMetadata()``, a vector is materialized as
-    # floats only if *every* element's raw text parses as one; otherwise
-    # raw text is used throughout, nested vectors included.
+    # as in ``TreeParser.processMetadata()``, a vector becomes floats only
+    # if *every* element's raw text parses as one; otherwise raw text is
+    # used throughout, nested vectors included
     try:
         return [float(_beast2_v2_7_8_raw_text(e)) for e in value_tree.children]
     except ValueError:
@@ -513,13 +501,11 @@ def _beast2_v2_7_8_materialize_value(value_tree):
 
 @functools.lru_cache(maxsize=None)
 def _beast2_v2_7_8_parser_and_transformer():
-    # imported lazily so that the (large, generated) standalone parser
-    # module is only ever loaded if this parser is actually used
+    # imported lazily: the generated parser module is large
     from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
 
-    # the value rules are deliberately left untransformed: their parse
-    # trees already carry everything materialization needs, as ``data``
-    # (the rule name, i.e. the value's type) and ``Token`` source text
+    # the value rules are left untransformed: ``data`` already gives the
+    # value's type, and their ``Token``s the source text
     @standalone.v_args(inline=True)
     class _ToMetadata(standalone.Transformer):
 
@@ -540,14 +526,12 @@ def _beast2_v2_7_8_parser_and_transformer():
 def parse_comment_metadata_beast2_v2_7_8(comment):
     """
     Returns a dictionary of field name to value pairs parsed out of a
-    "[&key=value,...]"-style comment, parsed to match the behavior of
-    BEAST2 v2.7.8 (``TreeParser``), including correct support for
-    arbitrarily-nested list ("vector") values, e.g.
-    ``history_all={{57,0.08,C,T},{134,0.079,A,G},{4,0.07,C,T}}``.
+    "[&key=value,...]"-style comment, using the comment metadata parsing
+    logic used by BEAST2 v2.7.8 (``TreeParser``), which handles nested
+    list ("vector") values, e.g. ``x={{1,2},{3,4}}``, correctly.
 
-    Suitable for use as (or wrapped by) the ``extract_comment_metadata``
-    argument of |NewickReader|/|NexusReader| to correctly parse trees
-    with this style of metadata comment.
+    May be passed as the ``extract_comment_metadata`` argument of
+    |NewickReader|/|NexusReader|.
 
     Parameters
     ----------
@@ -564,9 +548,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     ------
     ``ValueError``
         If ``comment`` is not well-formed according to the BEAST2
-        v2.7.8 metadata comment grammar, which
-        :func:`parse_comment_metadata_dendropy_v5_0_0` would instead
-        silently skip.
+        v2.7.8 metadata comment grammar.
 
     See Also
     --------
