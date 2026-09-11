@@ -355,7 +355,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
     Returns a dictionary of field name to value pairs parsed out of a
     "[&key=value,...]" (FigTree/BEAST-style) or "[&&NHX:key=value:...]"
     (New Hampshire Extended-style) comment, using the comment metadata
-    parsing logic used by DendroPy up to (and including) v5.0.0.
+    parsing logic used by DendroPy v5.0.0.
 
     Known limitation: list ("vector") values that are themselves nested,
     e.g. ``x={{1,2},{3,4}}``, are not handled correctly -- the outer
