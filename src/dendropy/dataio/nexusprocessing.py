@@ -288,6 +288,11 @@ class NexusTaxonSymbolMapper(object):
 ## is converted to |Annotation| objects by
 ## ``comment_metadata_to_annotations``.
 
+def _coerce_field_value(value, value_type):
+    if isinstance(value, list):
+        return [_coerce_field_value(v, value_type) for v in value]
+    return value_type(value)
+
 def comment_metadata_to_annotations(
         metadata,
         annotations=None,
@@ -331,11 +336,7 @@ def comment_metadata_to_annotations(
         field_value_types = {}
     for key, value in metadata.items():
         if key in field_value_types:
-            value_type = field_value_types[key]
-            if isinstance(value, list):
-                value = [value_type(v) for v in value]
-            else:
-                value = value_type(value)
+            value = _coerce_field_value(value, field_value_types[key])
         if key in field_name_map:
             key = field_name_map[key]
         annotations.add(basemodel.Annotation(name=key, value=value))
@@ -432,32 +433,9 @@ def parse_comment_metadata_to_annotations(
     Returns set of |Annotation| objects corresponding to metadata
     given in comments.
 
-    This is a convenience wrapper, retained for backward compatibility,
-    around :func:`parse_comment_metadata_dendropy_v5_0_0` and
-    :func:`comment_metadata_to_annotations`.
-
-    Parameters
-    ----------
-    ``comment`` : string
-        A comment token.
-    ``annotations`` : |AnnotationSet| or ``set``
-        Set of |Annotation| objects to which to add this annotation.
-    ``field_name_map`` : dict
-        A dictionary mapping field names (as given in the comment string)
-        to strings that should be used to represent the field in the
-        metadata dictionary; if not given, no mapping is done (i.e., the
-        comment string field name is used directly).
-    ``field_value_types`` : dict
-        A dictionary mapping field names (as given in the comment
-        string) to the value type (e.g. {"node-age" : float}.
-    ``strip_leading_trailing_spaces`` : boolean
-        Remove whitespace from comments.
-
-    Returns
-    -------
-    metadata : :py:``set`` [|Annotation|]
-        Set of |Annotation| objects corresponding to metadata
-        parsed.
+    Arguments are as for
+    :func:`parse_comment_metadata_dendropy_v5_0_0` and
+    :func:`comment_metadata_to_annotations`, which do the work.
     """
     metadata = parse_comment_metadata_dendropy_v5_0_0(
             comment,
@@ -472,22 +450,13 @@ def parse_comment_metadata_to_annotations(
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
-## Source grammar for _beast2_v2_7_8_lark_standalone.py (generated, and
-## separately licensed: see item 5 of "NOTICES.rst"), mirroring BEAST2's
-## own ANTLR grammar (NewickParser.g4/NewickLexer.g4,
-## github.com/CompEvol/beast2, tag "v2.7.8"). To regenerate that module
-## (requires the third-party "lark" package -- not a DendroPy runtime
-## dependency), save the grammar below to a file and run:
+## To regenerate _beast2_v2_7_8_lark_standalone.py from the grammar below
+## (which mirrors BEAST2's NewickParser.g4/NewickLexer.g4,
+## github.com/CompEvol/beast2, tag "v2.7.8"), save it to a file and run:
 ##
 ##     python -m lark.tools.standalone -l basic \
 ##         <saved-grammar-file> \
 ##         > src/dendropy/dataio/_beast2_v2_7_8_lark_standalone.py
-##
-## The "basic" (non-contextual) lexer is required, rather than the LALR
-## default of "contextual": it is what makes a purely-numeric token lex
-## as NUMBER (rather than ASTRING) regardless of grammar position,
-## matching the context-free lexing of BEAST2's own ANTLR grammar and so
-## correctly rejecting numeric-only attribute keys (e.g. "&123=5").
 ##
 ## -----------------------------------------------------------------------
 ## start: attribs
@@ -573,7 +542,8 @@ def _beast2_v2_7_8_parser_and_transformer():
             return _Beast2V2_7_8_ValueNode("vector", raw, elements=list(children))
 
         def attrib(self, children):
-            return tuple(children)
+            key, value_node = children
+            return key, _beast2_v2_7_8_materialize_value(value_node)
 
         def attribs(self, children):
             return list(children)
@@ -619,17 +589,16 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     --------
     parse_comment_metadata_dendropy_v5_0_0
     """
-    metadata = {}
     if comment.startswith("&&"):
         body = comment[2:]
     elif comment.startswith("&"):
         body = comment[1:]
     else:
         # unrecognized metadata pattern
-        return metadata
+        return {}
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
-        tree = parser.parse(body)
+        return dict(transformer.transform(parser.parse(body)))
     except standalone.UnexpectedInput as e:
         raise ValueError(
                 "Malformed BEAST2-style metadata comment: {}".format(e)) from e
@@ -638,9 +607,6 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
         raise ValueError(
                 "Malformed BEAST2-style metadata comment: vector nesting"
                 " is too deep to parse") from e
-    for key, value_node in transformer.transform(tree):
-        metadata[key] = _beast2_v2_7_8_materialize_value(value_node)
-    return metadata
 
 def process_comments_for_item(item,
         item_comments,

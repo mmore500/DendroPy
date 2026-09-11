@@ -250,6 +250,13 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
                 annotations_as_dict(annotations),
                 {"rate": 5.0, "hpd": [1.0, 2.0, 3.0]})
 
+    def test_field_value_types_nested_list(self):
+        annotations = nexusprocessing.comment_metadata_to_annotations(
+                {"hpd": [[1, 2], [3, [4]]]}, field_value_types={"hpd": float})
+        self.assertEqual(
+                annotations_as_dict(annotations),
+                {"hpd": [[1.0, 2.0], [3.0, [4.0]]]})
+
     def test_empty_dict_yields_no_annotations(self):
         annotations = nexusprocessing.comment_metadata_to_annotations({})
         self.assertEqual(len(annotations), 0)
