@@ -212,12 +212,7 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         self.assertEqual(list(d), [("'a key'", 1.0)])
 
     def test_double_ampersand_is_stripped_like_single(self):
-        # a leading "&&" (NHX-style) is stripped just like "&", for
-        # parity with parse_comment_metadata_dendropy_v5_0_0; real
-        # BEAST2's own lexer only ever strips a single leading "&"
-        # (OPENA is literally "[&"), but this parser deliberately
-        # departs from that lexer detail so it works as a drop-in
-        # extract_comment_metadata regardless of "&"-convention
+        # departs from exact BEAST2 fidelity
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 "&&subject='Pythonidae'")
         self.assertEqual(list(d), [("subject", "Pythonidae")])
@@ -267,13 +262,6 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 
 
 class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
-    """
-    ``parse_comment_metadata_beast2_v2_7_8_nesting`` shares its grammar
-    and error handling with ``parse_comment_metadata_beast2_v2_7_8``
-    (locked in by ``Beast2V2_7_8CommentMetadataParsingTestCase`` above),
-    but recursively materializes nested vectors instead of preserving
-    them as raw bracketed text: that divergence is what's tested here.
-    """
 
     def test_scalars_match_base_parser(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(

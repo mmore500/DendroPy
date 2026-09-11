@@ -507,13 +507,8 @@ def _beast2_v2_7_8_materialize_numeric_nesting(value_tree):
 def _beast2_v2_7_8_materialize_value_nesting(value_tree):
     if value_tree.data == "number":
         return float(value_tree.children[0].value)
-    elif value_tree.data != "vector":
-        return _beast2_v2_7_8_unquote(value_tree.children[0].value)
-    else:
-        # unlike ``_beast2_v2_7_8_materialize_value``, the numeric-only
-        # check and, on failure, the per-element fallback are both
-        # applied recursively: a vector element that is itself a vector
-        # gets its own (possibly nested) list rather than its raw text
+    elif value_tree.data == "vector":
+        # recurses into vector elements instead of using their raw text
         try:
             return [
                     _beast2_v2_7_8_materialize_numeric_nesting(e)
@@ -522,6 +517,8 @@ def _beast2_v2_7_8_materialize_value_nesting(value_tree):
             return [
                     _beast2_v2_7_8_materialize_value_nesting(e)
                     for e in value_tree.children]
+    else:
+        return _beast2_v2_7_8_unquote(value_tree.children[0].value)
 
 @functools.lru_cache(maxsize=None)
 def _beast2_v2_7_8_standalone_and_parser():
@@ -607,18 +604,8 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Notes
     -----
-    A leading "&&" (NHX-style) is stripped just like a single "&", for
-    parity with :func:`parse_comment_metadata_dendropy_v5_0_0`. Real
-    BEAST2's own lexer only ever strips a single leading "&" (its
-    ``OPENA`` token is literally ``"[&"``): fed a genuine
-    ``&&subject='Pythonidae'`` comment, it would lex the second "&" as
-    part of the first attribute's key rather than stripping it
-    (confirmed by compiling and running BEAST2 v2.7.8's own generated
-    ANTLR lexer/parser plus ``processMetadata()``, copied verbatim,
-    against a standalone harness). This function deliberately departs
-    from that one lexer detail so it works as a drop-in
-    ``extract_comment_metadata`` regardless of which "&"-convention a
-    tree file happens to use.
+    A leading "&&" is stripped like a single "&" (unlike real BEAST2's
+    lexer) for parity with :func:`parse_comment_metadata_dendropy_v5_0_0`.
 
     See Also
     --------
@@ -659,12 +646,8 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     ``[[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]`` instead of
     ``['{57,0.08,C,T}', '{134,0.079,A,G}']``.
 
-    This diverges from BEAST2 v2.7.8's own ``TreeParser``, which does
-    not decompose nested vectors this way; use
-    :func:`parse_comment_metadata_beast2_v2_7_8` instead if strict
-    fidelity to BEAST2's own (non-recursive) parsing behavior matters,
-    and this function if fully-typed nested values are more useful to
-    you than that fidelity.
+    See :func:`parse_comment_metadata_beast2_v2_7_8` for a faithful
+    implementation of BEAST2's own restrictions.
 
     May be passed as the ``extract_comment_metadata`` argument of
     |NewickReader|/|NexusReader|.
