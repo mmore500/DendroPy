@@ -311,7 +311,8 @@ def comment_metadata_to_annotations(
     ``field_value_types`` : dict
         A dictionary mapping field names (as given as keys in
         ``metadata``) to the value type (e.g. {"node-age" : float}),
-        applied element-wise to list values.
+        applied element-wise to list values. Nested lists are handled
+        recursively.
 
     Returns
     -------
@@ -375,8 +376,8 @@ def parse_comment_metadata_dendropy_v5_0_0(
     Notes
     -----
     Nested list ("vector") values, e.g. ``x={{1,2},{3,4}}``, are not
-    parsed correctly: the outer braces are matched only up to the first
-    inner closing brace.
+    supported. Values are returned as strings, apart from ``true`` and
+    ``false``, unless ``field_value_types`` gives the field a type.
     """
     metadata = []
     if field_value_types is None:
@@ -434,7 +435,6 @@ def parse_comment_metadata_to_annotations(
             comment,
             field_value_types=field_value_types,
             strip_leading_trailing_spaces=strip_leading_trailing_spaces)
-    # ``field_value_types`` has already been applied, above
     return comment_metadata_to_annotations(
             metadata,
             annotations=annotations,
@@ -444,8 +444,9 @@ def parse_comment_metadata_to_annotations(
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
 ##
 ## To regenerate _beast2_v2_7_8_lark_standalone.py from the grammar below
-## (which mirrors BEAST2's NewickParser.g4/NewickLexer.g4,
-## github.com/CompEvol/beast2, tag "v2.7.8"), save it to a file and run:
+## (which mirrors NewickParser.g4/NewickLexer.g4 of
+## https://github.com/CompEvol/beast2/tree/v2.7.8/src/beast/base/evolution/tree/treeparser),
+## save it to a file and run:
 ##
 ##     python -m lark.tools.standalone -l basic \
 ##         <saved-grammar-file> \
@@ -483,7 +484,8 @@ def _beast2_v2_7_8_unquote(text):
     return text[1:-1] if text[:1] in ("'", '"') else text
 
 def _beast2_v2_7_8_raw_text(value_tree):
-    # whitespace between tokens is dropped, as ANTLR's ``getText()`` does
+    # BEAST2 skips whitespace in its lexer, so the ``getText()`` that
+    # ``processMetadata()`` calls on each element never contains any
     if value_tree.data == "vector":
         return "{" + ",".join(
                 _beast2_v2_7_8_raw_text(element)
