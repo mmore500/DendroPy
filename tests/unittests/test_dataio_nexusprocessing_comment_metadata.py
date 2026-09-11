@@ -212,25 +212,34 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&'a key'=1")
         self.assertEqual(list(d), [("'a key'", 1.0)])
 
-    def test_double_ampersand_warns_and_is_not_stripped(self):
-        # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0
-        with self.assertWarns(UserWarning):
-            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                    "&&subject='Pythonidae'")
-        self.assertEqual(list(d), [("&subject", "Pythonidae")])
-
-    def test_double_ampersand_warning_suggests_re_sub_workaround(self):
-        # the warning message's suggested fix should actually work: strip
-        # the redundant "&" before parsing to silence the warning
-        import re
-        extract_comment_metadata = lambda comment: (
-                nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                        re.sub(r"^&&", "&", comment)))
+    def test_bare_double_ampersand_is_not_stripped_and_does_not_warn(self):
+        # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0;
+        # only an "&&NHX" marker (real NHX syntax) warns, not a bare "&&"
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            d = extract_comment_metadata("&&subject='Pythonidae'")
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
+                    "&&subject='Pythonidae'")
         self.assertEqual(caught, [])
-        self.assertEqual(list(d), [("subject", "Pythonidae")])
+        self.assertEqual(list(d), [("&subject", "Pythonidae")])
+
+    def test_nhx_marker_warns(self):
+        with self.assertWarns(UserWarning):
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
+                    "&&NHX:subject=Pythonidae")
+        self.assertEqual(list(d), [("&NHX:subject", "Pythonidae")])
+
+    def test_nhx_marker_warning_suggests_dendropy_v5_0_0_as_alternative(self):
+        d = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0(
+                "&&NHX:subject=Pythonidae")
+        self.assertEqual(d, [("subject", "Pythonidae")])
+
+    def test_nhx_marker_warning_suggests_whitespace_prefix_workaround(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
+                    " &&NHX:subject=Pythonidae")
+        self.assertEqual(caught, [])
+        self.assertEqual(list(d), [])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
@@ -333,11 +342,19 @@ class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTes
                 "&x=1,x=2,y=9")
         self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
-    def test_double_ampersand_warns_and_is_not_stripped(self):
-        with self.assertWarns(UserWarning):
+    def test_bare_double_ampersand_is_not_stripped_and_does_not_warn(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
             d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
                     "&&subject='Pythonidae'")
+        self.assertEqual(caught, [])
         self.assertEqual(list(d), [("&subject", "Pythonidae")])
+
+    def test_nhx_marker_warns(self):
+        with self.assertWarns(UserWarning):
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
+                    "&&NHX:subject=Pythonidae")
+        self.assertEqual(list(d), [("&NHX:subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(

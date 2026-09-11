@@ -424,21 +424,22 @@ def parse_comment_metadata_to_annotations(
             field_name_map=field_name_map)
 
 ###############################################################################
-## Metadata: warning when a leading "&&" is mistaken for an NHX marker
+## Metadata: warning when a leading "&&NHX" marker won't be understood
 ##
 ## Shared by any comment metadata parser that mimics an external tool's
 ## own syntax exactly (BEAST2's, and others to come) and so, unlike
 ## parse_comment_metadata_dendropy_v5_0_0, does not understand NHX's
-## "&&"-prefixed convention.
+## "&&NHX:"-prefixed convention.
 
 def _warn_if_nhx_marker(comment, parser_name):
-    if comment.startswith("&&"):
+    if comment.startswith("&&NHX"):
         warnings.warn(
-                "{} do not treat a leading \"&&\" as an NHX-style marker:"
-                " the second \"&\" is parsed as part of the first"
-                " attribute's key. To silence this, strip it yourself"
-                " first, e.g. extract_comment_metadata=lambda comment:"
-                " parser(re.sub(r'^&&', '&', comment)).".format(parser_name))
+                "{} do not understand NHX syntax: the leading \"&&NHX\""
+                " marker is parsed as literal key text, not stripped."
+                " To silence this: use parse_comment_metadata_dendropy_v5_0_0"
+                " instead, strip the marker yourself first (e.g. via"
+                " re.sub), or prefix the comment with whitespace to skip"
+                " it as metadata entirely.".format(parser_name))
 
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
