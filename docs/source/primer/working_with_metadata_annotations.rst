@@ -223,22 +223,22 @@ The NeXML format provides for rich, flexible and robust metadata annotation for 
 
 Parameter ``extract_comment_metadata`` also accepts a callable, allowing you to select an alternative comment metadata parser.
 This is useful because different tools emit subtly different comment metadata syntax; in particular, |DendroPy|'s default parser does not support nested list ("vector") values, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
-The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8` function follows the parsing semantics of BEAST2 v2.7.8.
-It infers value types the way BEAST2 does: unquoted numeric tokens become Python ``float``, and a vector's elements become a list of ``float`` only if *every* element parses as a number.
-Otherwise, each element's own original text is kept as-is, nested vectors included, which is why nested vectors below come back as their original bracketed text rather than a further-decomposed nested list::
+The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting` function infers value types the way BEAST2 v2.7.8 does (unquoted numeric tokens become Python ``float``), but, unlike BEAST2 itself, recursively decomposes nested vectors into real nested lists instead of preserving them as raw bracketed text::
 
     >>> import dendropy
-    >>> from dendropy.dataio.nexusprocessing import parse_comment_metadata_beast2_v2_7_8
+    >>> from dendropy.dataio.nexusprocessing import parse_comment_metadata_beast2_v2_7_8_nesting
     >>> tree = dendropy.Tree.get(
     ... data="((A[&rate=0.1,history_all={{57,0.08,C,T},{134,0.079,A,G}}]:1.0,B:1.0):1.0,C:1.0);",
     ... schema="newick",
-    ... extract_comment_metadata=parse_comment_metadata_beast2_v2_7_8,
+    ... extract_comment_metadata=parse_comment_metadata_beast2_v2_7_8_nesting,
     ... )
     >>> leaf_a = tree.find_node_with_taxon_label("A")
     >>> for a in leaf_a.annotations:
     ...     print("%s = %s" % (a.name, a.value))
     rate = 0.1
-    history_all = ['{57,0.08,C,T}', '{134,0.079,A,G}']
+    history_all = [[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]
+
+A strict-fidelity variant, :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8`, is also available if you need output that matches BEAST2's own (non-recursive) handling of nested vectors exactly.
 
 You can also supply your own callable, so long as it accepts a single comment string argument (e.g. ``"&rate=0.1,class='example'"``) and returns an iterable of (field name, value) pairs.
 Such a callable can wrap one of the built-in parsers to post-process the (field name, value) pairs it returns, for example to rename fields::
@@ -246,7 +246,7 @@ Such a callable can wrap one of the built-in parsers to post-process the (field 
     >>> rename_map = {"history_all": "transition_history"}
     >>> extract_comment_metadata = lambda comment: [
     ... (rename_map.get(k, k), v)
-    ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
+    ... for k, v in parse_comment_metadata_beast2_v2_7_8_nesting(comment)
     ... ]
     >>> tree = dendropy.Tree.get(
     ... data="((A[&rate=0.1,history_all={{57,0.08,C,T},{134,0.079,A,G}}]:1.0,B:1.0):1.0,C:1.0);",
@@ -257,14 +257,14 @@ Such a callable can wrap one of the built-in parsers to post-process the (field 
     >>> for a in leaf_a.annotations:
     ...     print("%s = %s" % (a.name, a.value))
     rate = 0.1
-    transition_history = ['{57,0.08,C,T}', '{134,0.079,A,G}']
+    transition_history = [[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]
 
 or to cast field values to application-specific types::
 
     >>> value_casts = {"generation": int}
     >>> extract_comment_metadata = lambda comment: [
     ... (k, value_casts.get(k, lambda x: x)(v))
-    ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
+    ... for k, v in parse_comment_metadata_beast2_v2_7_8_nesting(comment)
     ... ]
     >>> tree = dendropy.Tree.get(
     ... data="((A[&rate=0.1,generation=1000]:1.0,B:1.0):1.0,C:1.0);",
