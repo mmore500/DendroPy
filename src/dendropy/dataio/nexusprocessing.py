@@ -298,9 +298,8 @@ def comment_metadata_to_annotations(
 
     Parameters
     ----------
-    ``metadata`` : list or dict
-        A sequence of (field name, value) pairs, or a dictionary
-        mapping field name to value.
+    ``metadata`` : iterable
+        An iterable of (field name, value) pairs.
     ``annotations`` : |AnnotationSet| or ``set``
         Set of |Annotation| objects to which to add these annotations.
     ``field_name_map`` : dict
@@ -325,8 +324,6 @@ def comment_metadata_to_annotations(
         field_name_map = {}
     if field_value_types is None:
         field_value_types = {}
-    if hasattr(metadata, "items"):
-        metadata = metadata.items()
     for key, value in metadata:
         value_type = field_value_types.get(key)
         if value_type is not None:
@@ -376,8 +373,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
     Notes
     -----
     Nested list ("vector") values, e.g. ``x={{1,2},{3,4}}``, are not
-    supported. Values are returned as strings, apart from ``true`` and
-    ``false``, unless ``field_value_types`` gives the field a type.
+    supported.
     """
     metadata = []
     if field_value_types is None:
@@ -525,13 +521,15 @@ def _beast2_v2_7_8_parser_and_transformer():
             return attribs
 
         def start(self, attribs):
-            return dict(attribs)
+            # BEAST2 calls node.setMetaData() per attribute, so a
+            # repeated field name keeps only its last value
+            return list(dict(attribs).items())
 
     return standalone, standalone.Lark_StandAlone(), _ToMetadata()
 
 def parse_comment_metadata_beast2_v2_7_8(comment):
     """
-    Returns a dictionary of field name to value pairs parsed out of a
+    Returns a list of (field name, value) pairs parsed out of a
     "[&key=value,...]"-style comment, using the comment metadata parsing
     logic used by BEAST2 v2.7.8 (``TreeParser``), which handles nested
     list ("vector") values, e.g. ``x={{1,2},{3,4}}``, correctly.
@@ -547,8 +545,9 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Returns
     -------
-    metadata : dict
-        Dictionary of field name to (parsed) value.
+    metadata : list
+        List of (field name, parsed value) pairs; a field name repeated
+        in the comment keeps only its last value.
 
     Raises
     ------
@@ -566,7 +565,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
         body = comment[1:]
     else:
         # unrecognized metadata pattern
-        return {}
+        return []
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
     try:
         return transformer.transform(parser.parse(body))

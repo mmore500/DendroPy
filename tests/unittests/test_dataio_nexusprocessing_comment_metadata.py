@@ -161,55 +161,63 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     def test_numbers_and_strings(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 '&rate=0.0123,label="hello",tag=bareword')
-        self.assertEqual(d, {"rate": 0.0123, "label": "hello", "tag": "bareword"})
+        self.assertEqual(
+                d, [("rate", 0.0123), ("label", "hello"), ("tag", "bareword")])
 
     def test_single_quoted_value(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&label='hello'")
-        self.assertEqual(d, {"label": "hello"})
+        self.assertEqual(d, [("label", "hello")])
 
     def test_negative_and_scientific_notation_numbers(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 "&a=-1.5,b=4.938776751387227E-4")
-        self.assertEqual(d["a"], -1.5)
-        self.assertAlmostEqual(d["b"], 4.938776751387227E-4)
+        self.assertEqual(dict(d)["a"], -1.5)
+        self.assertAlmostEqual(dict(d)["b"], 4.938776751387227E-4)
 
     def test_all_numeric_vector(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&hpd={1.1,2.2,3.3}")
-        self.assertEqual(d, {"hpd": [1.1, 2.2, 3.3]})
+        self.assertEqual(d, [("hpd", [1.1, 2.2, 3.3])])
 
     def test_mixed_vector_falls_back_to_raw_text(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&x={1,"a"}')
-        self.assertEqual(d["x"], ["1", '"a"'])
+        self.assertEqual(d, [("x", ["1", '"a"'])])
 
     def test_string_only_vector_falls_back_to_raw_text(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={C,T,A,G}")
-        self.assertEqual(d["x"], ["C", "T", "A", "G"])
+        self.assertEqual(d, [("x", ["C", "T", "A", "G"])])
 
     def test_nested_vector_resolves_issue_145(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(ISSUE_145_COMMENT)
         self.assertEqual(
-                d["history_all"],
-                ["{57,0.08,C,T}", "{134,0.079,A,G}", "{4,0.07,C,T}"])
+                d,
+                [("history_all",
+                  ["{57,0.08,C,T}", "{134,0.079,A,G}", "{4,0.07,C,T}"])])
 
     def test_doubly_nested_vector(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x={{{1,2},{3,4}},{5,6}}")
-        self.assertEqual(d["x"], ["{{1,2},{3,4}}", "{5,6}"])
+        self.assertEqual(d, [("x", ["{{1,2},{3,4}}", "{5,6}"])])
 
     def test_whitespace_is_tolerated(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 "& rate = 0.5 , hpd = { 1.1 , 2.2 } ")
-        self.assertEqual(d, {"rate": 0.5, "hpd": [1.1, 2.2]})
+        self.assertEqual(d, [("rate", 0.5), ("hpd", [1.1, 2.2])])
 
     def test_quoting_protects_whitespace(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8('&" a key "=1')
-        self.assertEqual(d, {" a key ": 1.0})
+        self.assertEqual(d, [(" a key ", 1.0)])
 
     def test_empty_comment_returns_empty(self):
-        self.assertEqual(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&"), {})
+        self.assertEqual(nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&"), [])
+
+    def test_repeated_field_names_keep_the_last_value(self):
+        # BEAST2 calls node.setMetaData() per attribute, so a repeated
+        # field name overwrites rather than accumulating
+        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&x=1,x=2,y=9")
+        self.assertEqual(d, [("x", 2.0), ("y", 9.0)])
 
     def test_unrecognized_comment_returns_empty(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("not a metadata comment")
-        self.assertEqual(d, {})
+        self.assertEqual(d, [])
 
     def test_malformed_missing_value_raises(self):
         with self.assertRaises(ValueError):
@@ -232,6 +240,7 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
     def test_real_mcc_tree_example_comment(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 REAL_MCC_TREE_EXAMPLE_COMMENT)
+        d = dict(d)
         self.assertEqual(d["state"], "D")
         self.assertEqual(d["state.prob"], 1.0)
         self.assertAlmostEqual(d["rate"], 0.007334968720519001)
@@ -244,19 +253,19 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
 
     def test_basic(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
-                {"rate": 0.5, "label": "x"})
+                [("rate", 0.5), ("label", "x")])
         self.assertEqual(
                 annotations_as_dict(annotations), {"rate": 0.5, "label": "x"})
 
     def test_field_name_map(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
-                {"rate": 0.5}, field_name_map={"rate": "substitution_rate"})
+                [("rate", 0.5)], field_name_map={"rate": "substitution_rate"})
         self.assertEqual(
                 annotations_as_dict(annotations), {"substitution_rate": 0.5})
 
     def test_field_value_types_scalar_and_list(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
-                {"rate": 5, "hpd": [1, 2, 3]},
+                [("rate", 5), ("hpd", [1, 2, 3])],
                 field_value_types={"rate": float, "hpd": float})
         self.assertEqual(
                 annotations_as_dict(annotations),
@@ -264,7 +273,7 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
 
     def test_field_value_types_nested_list(self):
         annotations = nexusprocessing.comment_metadata_to_annotations(
-                {"hpd": [[1, 2], [3, [4]]]}, field_value_types={"hpd": float})
+                [("hpd", [[1, 2], [3, [4]]])], field_value_types={"hpd": float})
         self.assertEqual(
                 annotations_as_dict(annotations),
                 {"hpd": [[1.0, 2.0], [3.0, [4.0]]]})
@@ -276,8 +285,8 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
                 sorted((a.name, a.value) for a in annotations),
                 [("x", 1), ("x", 2)])
 
-    def test_empty_dict_yields_no_annotations(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations({})
+    def test_empty_metadata_yields_no_annotations(self):
+        annotations = nexusprocessing.comment_metadata_to_annotations([])
         self.assertEqual(len(annotations), 0)
 
 
@@ -352,7 +361,7 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
 
     def test_custom_user_callable(self):
         def my_parser(comment):
-            return {"raw": comment}
+            return [("raw", comment)]
         tree = dendropy.Tree.get(
                 data=self.NEWICK_STR, schema="newick",
                 extract_comment_metadata=my_parser)
@@ -363,7 +372,7 @@ class ExtractCommentMetadataCallableIntegrationTestCase(dendropytest.ExtendedTes
         # when metadata extraction yields nothing, the raw comment is
         # kept (as a plain comment) rather than silently dropped
         def no_op_parser(comment):
-            return {}
+            return []
         tree = dendropy.Tree.get(
                 data=self.NEWICK_STR, schema="newick",
                 extract_comment_metadata=no_op_parser)
