@@ -491,10 +491,46 @@ def _beast2_v2_7_8_materialize_value(value_tree):
         except ValueError:
             return [_beast2_v2_7_8_raw_text(e) for e in value_tree.children]
 
+def _beast2_v2_7_8_materialize_numeric_nesting(value_tree):
+    # raises ValueError unless value_tree is, recursively, a number or a
+    # vector whose elements are all numbers or all-numeric vectors
+    if value_tree.data == "number":
+        return float(value_tree.children[0].value)
+    elif value_tree.data == "vector":
+        return [
+                _beast2_v2_7_8_materialize_numeric_nesting(e)
+                for e in value_tree.children]
+    else:
+        raise ValueError
+
+def _beast2_v2_7_8_materialize_value_nesting(value_tree):
+    if value_tree.data == "number":
+        return float(value_tree.children[0].value)
+    elif value_tree.data != "vector":
+        return _beast2_v2_7_8_unquote(value_tree.children[0].value)
+    else:
+        # unlike ``_beast2_v2_7_8_materialize_value``, the numeric-only
+        # check and, on failure, the per-element fallback are both
+        # applied recursively: a vector element that is itself a vector
+        # gets its own (possibly nested) list rather than its raw text
+        try:
+            return [
+                    _beast2_v2_7_8_materialize_numeric_nesting(e)
+                    for e in value_tree.children]
+        except ValueError:
+            return [
+                    _beast2_v2_7_8_materialize_value_nesting(e)
+                    for e in value_tree.children]
+
 @functools.lru_cache(maxsize=None)
-def _beast2_v2_7_8_parser_and_transformer():
+def _beast2_v2_7_8_standalone_and_parser():
     # import lazily: the generated parser module is large
     from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
+    return standalone, standalone.Lark_StandAlone()
+
+@functools.lru_cache(maxsize=None)
+def _beast2_v2_7_8_parser_and_transformer():
+    standalone, parser = _beast2_v2_7_8_standalone_and_parser()
 
     # the value rules are left untransformed: ``data`` already gives the
     # value's type, and their ``Token``s the source text
@@ -517,7 +553,28 @@ def _beast2_v2_7_8_parser_and_transformer():
             # repeated field name keeps only its last value
             return dict(attribs)
 
-    return standalone, standalone.Lark_StandAlone(), _ToMetadata()
+    return standalone, parser, _ToMetadata()
+
+@functools.lru_cache(maxsize=None)
+def _beast2_v2_7_8_parser_and_transformer_nesting():
+    standalone, parser = _beast2_v2_7_8_standalone_and_parser()
+
+    @standalone.v_args(inline=True)
+    class _ToMetadata(standalone.Transformer):
+
+        def key(self, token):
+            return token.value
+
+        def attrib(self, key, value_tree):
+            return key, _beast2_v2_7_8_materialize_value_nesting(value_tree)
+
+        def attribs(self, *attribs):
+            return attribs
+
+        def start(self, attribs):
+            return dict(attribs)
+
+    return standalone, parser, _ToMetadata()
 
 def parse_comment_metadata_beast2_v2_7_8(comment):
     """
@@ -547,18 +604,92 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
         If ``comment`` is not well-formed according to the BEAST2
         v2.7.8 metadata comment grammar.
 
+    Notes
+    -----
+    Unlike :func:`parse_comment_metadata_dendropy_v5_0_0`, a leading
+    "&&" (NHX-style) is not treated specially: BEAST2's own lexer only
+    ever strips a single leading "&" (its ``OPENA`` token is literally
+    ``"[&"``), so a second "&" is left to lex as part of the first
+    attribute's key, e.g. ``&&subject='Pythonidae'`` parses as key
+    ``"&subject"`` (confirmed by compiling and running BEAST2 v2.7.8's
+    own generated ANTLR lexer/parser plus ``processMetadata()``, copied
+    verbatim, against a standalone harness).
+
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
+    parse_comment_metadata_beast2_v2_7_8_nesting
     """
-    if comment.startswith("&&"):
-        body = comment[2:]
-    elif comment.startswith("&"):
+    if comment.startswith("&"):
         body = comment[1:]
     else:
         # unrecognized metadata pattern
         return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
+    try:
+        return transformer.transform(parser.parse(body)).items()
+    except standalone.UnexpectedInput as e:
+        raise ValueError(
+                "Malformed BEAST2-style metadata comment: {}".format(e)) from e
+    except RecursionError as e:
+        # pathologically deep vector nesting
+        raise ValueError(
+                "Malformed BEAST2-style metadata comment: vector nesting"
+                " is too deep to parse") from e
+
+def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
+    """
+    Like :func:`parse_comment_metadata_beast2_v2_7_8`, but recursively
+    materializes nested vectors instead of preserving them as raw
+    bracketed text.
+
+    At each level of nesting, a vector becomes a (possibly nested) list
+    of ``float`` if every one of its elements is itself a number or a
+    recursively all-numeric vector; otherwise each element is
+    materialized independently, so a vector mixing numbers and strings
+    gets individually-typed elements rather than one flat list of raw
+    text, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}`` becomes
+    ``[[57.0, 0.08, 'C', 'T'], [134.0, 0.079, 'A', 'G']]`` instead of
+    ``['{57,0.08,C,T}', '{134,0.079,A,G}']``.
+
+    This diverges from BEAST2 v2.7.8's own ``TreeParser``, which does
+    not decompose nested vectors this way; use
+    :func:`parse_comment_metadata_beast2_v2_7_8` instead if strict
+    fidelity to BEAST2's own (non-recursive) parsing behavior matters,
+    and this function if fully-typed nested values are more useful to
+    you than that fidelity.
+
+    May be passed as the ``extract_comment_metadata`` argument of
+    |NewickReader|/|NexusReader|.
+
+    Parameters
+    ----------
+    ``comment`` : string
+        A comment token. Whitespace is insignificant except within
+        quoted strings.
+
+    Returns
+    -------
+    metadata : items view
+        (field name, parsed value) pairs; a field name repeated in the
+        comment keeps only its last value.
+
+    Raises
+    ------
+    ``ValueError``
+        If ``comment`` is not well-formed according to the BEAST2
+        v2.7.8 metadata comment grammar.
+
+    See Also
+    --------
+    parse_comment_metadata_beast2_v2_7_8
+    """
+    if comment.startswith("&"):
+        body = comment[1:]
+    else:
+        # unrecognized metadata pattern
+        return {}.items()
+    standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer_nesting()
     try:
         return transformer.transform(parser.parse(body)).items()
     except standalone.UnexpectedInput as e:
