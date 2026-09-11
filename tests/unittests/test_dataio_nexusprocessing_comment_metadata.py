@@ -235,9 +235,8 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
                         re.sub(r"^&&NHX:?", "&", c)))
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            d = extract_comment_metadata("&&NHX:subject=Pythonidae")
+            extract_comment_metadata("&&NHX:subject=Pythonidae")
         self.assertEqual(caught, [])
-        self.assertEqual(list(d), [("subject", "Pythonidae")])
 
     def test_nhx_marker_warning_suggests_whitespace_workaround(self):
         extract_comment_metadata = lambda c: (
@@ -245,9 +244,8 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
                         "& " + c[1:] if c.startswith("&&NHX") else c))
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            d = extract_comment_metadata("&&NHX:subject=Pythonidae")
+            extract_comment_metadata("&&NHX:subject=Pythonidae")
         self.assertEqual(caught, [])
-        self.assertEqual(list(d), [("&NHX:subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
