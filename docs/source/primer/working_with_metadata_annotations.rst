@@ -221,6 +221,25 @@ In general, support for metadata in NEXUS and NEWICK formats is very basic and l
 These issues and limits are fundamental to the NEXUS and NEWICK formats, and thus if metadata is important to you and your work, you should be working with NeXML format.
 The NeXML format provides for rich, flexible and robust metadata annotation for the broad range of phylogenetic data, and |DendroPy| provides full support for metadata reading and writing in NeXML.
 
+Instead of ``True``, ``extract_comment_metadata`` also accepts a callable, allowing you to select an alternative comment metadata parser.
+This is useful because different tools emit subtly different comment metadata syntax; in particular, |DendroPy|'s default parser does not correctly handle nested list ("vector") values, such as those emitted by BEAST2, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
+The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8` function provides a parser reverse-engineered from BEAST2 v2.7.8 itself, and handles such nested vectors correctly::
+
+    >>> import dendropy
+    >>> from dendropy.dataio.nexusprocessing import parse_comment_metadata_beast2_v2_7_8
+    >>> tree = dendropy.Tree.get(
+    ... data="((A[&rate=0.1,history_all={{57,0.08,C,T},{134,0.079,A,G}}]:1.0,B:1.0):1.0,C:1.0);",
+    ... schema="newick",
+    ... extract_comment_metadata=parse_comment_metadata_beast2_v2_7_8,
+    ... )
+    >>> leaf_a = tree.find_node_with_taxon_label("A")
+    >>> for a in leaf_a.annotations:
+    ...     print("%s = %s" % (a.name, a.value))
+    rate = 0.1
+    history_all = ['{57,0.08,C,T}', '{134,0.079,A,G}']
+
+You can also supply your own callable, so long as it accepts a single comment string argument (e.g. ``"&rate=0.1"``) and returns an iterable of (field name, value) pairs.
+
 
 Direct Composition with Literal Values
 --------------------------------------
