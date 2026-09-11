@@ -355,16 +355,16 @@ def parse_comment_metadata_dendropy_v5_0_0(
     ``field_value_types`` : dict
         A dictionary mapping field names (as given in the comment
         string) to the value type (e.g. {"node-age" : float}). Applied
-        only to list ("vector") values (element-wise) and to
-        otherwise-untyped scalars.
+        element-wise to list ("vector") values, and to values that are
+        neither quoted nor ``true``/``false``.
     ``strip_leading_trailing_spaces`` : boolean
         Remove whitespace from comments.
 
     Returns
     -------
     metadata : list
-        List of (field name, parsed value) pairs, in comment order; a
-        field name repeated in the comment is repeated here.
+        List of (field name, parsed value) pairs, in comment order,
+        possibly containing duplicate field names.
 
     See Also
     --------
@@ -477,6 +477,7 @@ def parse_comment_metadata_to_annotations(
 ## -----------------------------------------------------------------------
 
 def _beast2_v2_7_8_unquote(text):
+    # BEAST2 tests only the leading quote, then strips both ends
     return text[1:-1] if text[:1] in ("'", '"') else text
 
 def _beast2_v2_7_8_raw_text(value_tree):
@@ -486,24 +487,28 @@ def _beast2_v2_7_8_raw_text(value_tree):
         return "{" + ",".join(
                 _beast2_v2_7_8_raw_text(element)
                 for element in value_tree.children) + "}"
-    return value_tree.children[0].value
+    else:
+        return value_tree.children[0].value
 
 def _beast2_v2_7_8_materialize_value(value_tree):
     if value_tree.data == "number":
         return float(value_tree.children[0].value)
-    if value_tree.data != "vector":
+    elif value_tree.data != "vector":
         return _beast2_v2_7_8_unquote(value_tree.children[0].value)
-    # as in ``TreeParser.processMetadata()``, a vector becomes floats only
-    # if *every* element's raw text parses as one; otherwise raw text is
-    # used throughout, nested vectors included
-    try:
-        return [float(_beast2_v2_7_8_raw_text(e)) for e in value_tree.children]
-    except ValueError:
-        return [_beast2_v2_7_8_raw_text(e) for e in value_tree.children]
+    else:
+        # as in ``TreeParser.processMetadata()``, a vector becomes floats
+        # only if *every* element's raw text parses as one; otherwise raw
+        # text is used throughout, nested vectors included
+        try:
+            return [
+                    float(_beast2_v2_7_8_raw_text(e))
+                    for e in value_tree.children]
+        except ValueError:
+            return [_beast2_v2_7_8_raw_text(e) for e in value_tree.children]
 
 @functools.lru_cache(maxsize=None)
 def _beast2_v2_7_8_parser_and_transformer():
-    # imported lazily: the generated parser module is large
+    # import lazily: the generated parser module is large
     from dendropy.dataio import _beast2_v2_7_8_lark_standalone as standalone
 
     # the value rules are left untransformed: ``data`` already gives the
@@ -583,15 +588,15 @@ def process_comments_for_item(item,
         extract_comment_metadata):
     if not item_comments or item is None:
         return
-    if callable(extract_comment_metadata):
-        parse_fn = extract_comment_metadata
-    elif extract_comment_metadata:
-        parse_fn = parse_comment_metadata_dendropy_v5_0_0
-    else:
-        parse_fn = None
+    metacomment_parse_fn = (
+            extract_comment_metadata
+            if callable(extract_comment_metadata)
+            else parse_comment_metadata_dendropy_v5_0_0
+            if extract_comment_metadata
+            else None)
     for comment in item_comments:
-        if parse_fn is not None and comment.startswith("&"):
-            metadata = parse_fn(comment)
+        if metacomment_parse_fn is not None and comment.startswith("&"):
+            metadata = metacomment_parse_fn(comment)
             if metadata:
                 comment_metadata_to_annotations(
                         metadata, annotations=item.annotations)

@@ -228,7 +228,7 @@ class NexusReader(ioservice.DataReader):
             parsed, but will be instead stored directly as elements of
             the ``comments`` list attribute of the associated object.
             A callable may be given instead: it will be called with a
-            single comment token string and must return a list of
+            single comment token string and must return an iterable of
             (field name, value) pairs, which is then converted into
             |Annotation| objects.
         store_tree_weights : boolean, default: |False|

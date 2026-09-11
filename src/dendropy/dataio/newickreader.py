@@ -154,7 +154,7 @@ class NewickReader(ioservice.DataReader):
             parsed, but will be instead stored directly as elements of
             the ``comments`` list attribute of the associated object.
             A callable may be given instead: it will be called with a
-            single comment token string and must return a list of
+            single comment token string and must return an iterable of
             (field name, value) pairs, which is then converted into
             |Annotation| objects.
         store_tree_weights : boolean, default: |False|
@@ -419,12 +419,12 @@ class NewickReader(ioservice.DataReader):
             return
         rooting_token_found = False
         weighting_token_found = False
-        if callable(self.extract_comment_metadata):
-            parse_fn = self.extract_comment_metadata
-        elif self.extract_comment_metadata:
-            parse_fn = nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
-        else:
-            parse_fn = None
+        metacomment_parse_fn = (
+                self.extract_comment_metadata
+                if callable(self.extract_comment_metadata)
+                else nexusprocessing.parse_comment_metadata_dendropy_v5_0_0
+                if self.extract_comment_metadata
+                else None)
         for comment in tree_comments:
             stripped_comment = comment.strip()
             if stripped_comment in ["&u", "&U", "&r", "&R"]:
@@ -461,8 +461,8 @@ class NewickReader(ioservice.DataReader):
                     exc.__context__ = None # Python 3.0, 3.1, 3.2
                     exc.__cause__ = None # Python 3.3, 3.4
                     raise exc
-            elif parse_fn is not None and comment.startswith("&"):
-                metadata = parse_fn(comment)
+            elif metacomment_parse_fn is not None and comment.startswith("&"):
+                metadata = metacomment_parse_fn(comment)
                 if metadata:
                     nexusprocessing.comment_metadata_to_annotations(
                             metadata, annotations=tree.annotations)
