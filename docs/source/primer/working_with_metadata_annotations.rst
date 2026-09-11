@@ -261,9 +261,9 @@ Such a callable can wrap one of the built-in parsers to post-process the (field 
 
 or to cast field values to application-specific types::
 
-    >>> value_casts = {"generation": int}
+    >>> cast_map = {"generation": int}
     >>> extract_comment_metadata = lambda comment: [
-    ... (k, value_casts.get(k, lambda x: x)(v))
+    ... (k, cast_map.get(k, lambda x: x)(v))
     ... for k, v in parse_comment_metadata_beast2_v2_7_8_nesting(comment)
     ... ]
     >>> tree = dendropy.Tree.get(
