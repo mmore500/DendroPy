@@ -282,7 +282,7 @@ Such a callable can wrap one of the built-in parsers to post-process the (field 
 <span class="go">transition_history = [[57.0, 0.08, &#39;C&#39;, &#39;T&#39;], [134.0, 0.079, &#39;A&#39;, &#39;G&#39;]]</span>
 </pre></div>
 </div>
-<p>or to cast field values to application-specific types:</p>
+<p>or to cast field values to desired types:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cast_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;generation&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">extract_comment_metadata</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">comment</span><span class="p">:</span> <span class="p">[</span>
 <span class="gp">... </span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">cast_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)(</span><span class="n">v</span><span class="p">))</span>
