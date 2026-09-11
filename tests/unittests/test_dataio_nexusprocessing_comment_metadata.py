@@ -253,19 +253,19 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
 class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
 
     def test_basic(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations(
+        annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("rate", 0.5), ("label", "x")])
         self.assertEqual(
                 annotations_as_dict(annotations), {"rate": 0.5, "label": "x"})
 
     def test_field_name_map(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations(
+        annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("rate", 0.5)], field_name_map={"rate": "substitution_rate"})
         self.assertEqual(
                 annotations_as_dict(annotations), {"substitution_rate": 0.5})
 
     def test_field_value_types_scalar_and_list(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations(
+        annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("rate", 5), ("hpd", [1, 2, 3])],
                 field_value_types={"rate": float, "hpd": float})
         self.assertEqual(
@@ -273,21 +273,21 @@ class CommentMetadataToAnnotationsTestCase(dendropytest.ExtendedTestCase):
                 {"rate": 5.0, "hpd": [1.0, 2.0, 3.0]})
 
     def test_field_value_types_nested_list(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations(
+        annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("hpd", [[1, 2], [3, [4]]])], field_value_types={"hpd": float})
         self.assertEqual(
                 annotations_as_dict(annotations),
                 {"hpd": [[1.0, 2.0], [3.0, [4.0]]]})
 
     def test_accepts_pairs_with_repeated_field_names(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations(
+        annotations = nexusprocessing._comment_metadata_to_annotations(
                 [("x", 1), ("x", 2)])
         self.assertEqual(
                 sorted((a.name, a.value) for a in annotations),
                 [("x", 1), ("x", 2)])
 
     def test_empty_metadata_yields_no_annotations(self):
-        annotations = nexusprocessing.comment_metadata_to_annotations([])
+        annotations = nexusprocessing._comment_metadata_to_annotations([])
         self.assertEqual(len(annotations), 0)
 
 

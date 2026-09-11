@@ -286,7 +286,7 @@ def _coerce_field_value(value, value_type):
         return [_coerce_field_value(v, value_type) for v in value]
     return value_type(value)
 
-def comment_metadata_to_annotations(
+def _comment_metadata_to_annotations(
         metadata,
         annotations=None,
         field_name_map=None,
@@ -426,13 +426,13 @@ def parse_comment_metadata_to_annotations(
 
     Arguments are as for
     :func:`parse_comment_metadata_dendropy_v5_0_0` and
-    :func:`comment_metadata_to_annotations`, which do the work.
+    :func:`_comment_metadata_to_annotations`, which do the work.
     """
     metadata = parse_comment_metadata_dendropy_v5_0_0(
             comment,
             field_value_types=field_value_types,
             strip_leading_trailing_spaces=strip_leading_trailing_spaces)
-    return comment_metadata_to_annotations(
+    return _comment_metadata_to_annotations(
             metadata,
             annotations=annotations,
             field_name_map=field_name_map)
@@ -599,7 +599,7 @@ def process_comments_for_item(item,
         if metacomment_parse_fn is not None and comment.startswith("&"):
             metadata = metacomment_parse_fn(comment)
             if metadata:
-                comment_metadata_to_annotations(
+                _comment_metadata_to_annotations(
                         metadata, annotations=item.annotations)
             else:
                 item.comments.append(comment)
