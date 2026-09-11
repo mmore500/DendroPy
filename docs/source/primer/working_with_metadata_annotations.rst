@@ -217,13 +217,15 @@ unless the keyword argument ``extract_comment_metadata=True`` is passed in to th
     ... "nexus",
     ... extract_comment_metadata=True)
 
-In general, support for metadata in NEXUS and NEWICK formats is very basic and lossy, and is limited to a small range of phylogenetic data types (taxa, trees, nodes, edges).
+In general, |DendroPy|'s default support for metadata in NEXUS and NEWICK formats is very basic and lossy, and is limited to a small range of phylogenetic data types (taxa, trees, nodes, edges).
 These issues and limits are fundamental to the NEXUS and NEWICK formats, and thus if metadata is important to you and your work, you should be working with NeXML format.
 The NeXML format provides for rich, flexible and robust metadata annotation for the broad range of phylogenetic data, and |DendroPy| provides full support for metadata reading and writing in NeXML.
 
-Instead of ``True``, ``extract_comment_metadata`` also accepts a callable, allowing you to select an alternative comment metadata parser.
-This is useful because different tools emit subtly different comment metadata syntax; in particular, |DendroPy|'s default parser does not correctly handle nested list ("vector") values, such as those emitted by BEAST2, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
-The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8` function provides a parser reverse-engineered from BEAST2 v2.7.8 itself, and handles such nested vectors correctly::
+Parameter ``extract_comment_metadata`` also accepts a callable, allowing you to select an alternative comment metadata parser.
+This is useful because different tools emit subtly different comment metadata syntax; in particular, |DendroPy|'s default parser does not support nested list ("vector") values, e.g. ``history_all={{57,0.08,C,T},{134,0.079,A,G}}``.
+The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8` function follows the parsing semantics of BEAST2 v2.7.8.
+It infers value types the way BEAST2 does: unquoted numeric tokens become Python ``float``, and a vector's elements become a list of ``float`` only if *every* element parses as a number.
+Otherwise, each element's own original text is kept as-is, nested vectors included, which is why nested vectors below come back as their original bracketed text rather than a further-decomposed nested list::
 
     >>> import dendropy
     >>> from dendropy.dataio.nexusprocessing import parse_comment_metadata_beast2_v2_7_8
@@ -238,12 +240,12 @@ The :func:`~dendropy.dataio.nexusprocessing.parse_comment_metadata_beast2_v2_7_8
     rate = 0.1
     history_all = ['{57,0.08,C,T}', '{134,0.079,A,G}']
 
-You can also supply your own callable, so long as it accepts a single comment string argument (e.g. ``"&rate=0.1"``) and returns an iterable of (field name, value) pairs.
+You can also supply your own callable, so long as it accepts a single comment string argument (e.g. ``"&rate=0.1,class='example'"``) and returns an iterable of (field name, value) pairs.
 Such a callable can wrap one of the built-in parsers to post-process the (field name, value) pairs it returns, for example to rename fields::
 
-    >>> key_map = {"rate": "substitution_rate", "history_all": "transition_history"}
+    >>> rename_map = {"history_all": "transition_history"}
     >>> extract_comment_metadata = lambda comment: [
-    ... (key_map.get(k, k), v)
+    ... (rename_map.get(k, k), v)
     ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
     ... ]
     >>> tree = dendropy.Tree.get(
@@ -254,18 +256,18 @@ Such a callable can wrap one of the built-in parsers to post-process the (field 
     >>> leaf_a = tree.find_node_with_taxon_label("A")
     >>> for a in leaf_a.annotations:
     ...     print("%s = %s" % (a.name, a.value))
-    substitution_rate = 0.1
+    rate = 0.1
     transition_history = ['{57,0.08,C,T}', '{134,0.079,A,G}']
 
 or to cast field values to application-specific types::
 
-    >>> value_casts = {"significant": lambda v: v.lower() in ("yes", "true")}
+    >>> value_casts = {"generation": int}
     >>> extract_comment_metadata = lambda comment: [
     ... (k, value_casts.get(k, lambda x: x)(v))
     ... for k, v in parse_comment_metadata_beast2_v2_7_8(comment)
     ... ]
     >>> tree = dendropy.Tree.get(
-    ... data="((A[&rate=0.1,significant=yes]:1.0,B:1.0):1.0,C:1.0);",
+    ... data="((A[&rate=0.1,generation=1000]:1.0,B:1.0):1.0,C:1.0);",
     ... schema="newick",
     ... extract_comment_metadata=extract_comment_metadata,
     ... )
@@ -273,9 +275,9 @@ or to cast field values to application-specific types::
     >>> for a in leaf_a.annotations:
     ...     print("%s = %r" % (a.name, a.value))
     rate = 0.1
-    significant = True
+    generation = 1000
 
-In both cases, fields not named in the dictionary pass through unchanged, courtesy of ``dict.get()``'s default argument.
+Note the use of ``dict.get()``'s second argument for default pass-through in both examples: a field not named in the dictionary (``rate``, above) is returned unchanged.
 
 
 Direct Composition with Literal Values
