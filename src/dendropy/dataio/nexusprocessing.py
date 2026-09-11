@@ -606,21 +606,27 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Notes
     -----
-    Unlike :func:`parse_comment_metadata_dendropy_v5_0_0`, a leading
-    "&&" (NHX-style) is not treated specially: BEAST2's own lexer only
-    ever strips a single leading "&" (its ``OPENA`` token is literally
-    ``"[&"``), so a second "&" is left to lex as part of the first
-    attribute's key, e.g. ``&&subject='Pythonidae'`` parses as key
-    ``"&subject"`` (confirmed by compiling and running BEAST2 v2.7.8's
-    own generated ANTLR lexer/parser plus ``processMetadata()``, copied
-    verbatim, against a standalone harness).
+    A leading "&&" (NHX-style) is stripped just like a single "&", for
+    parity with :func:`parse_comment_metadata_dendropy_v5_0_0`. Real
+    BEAST2's own lexer only ever strips a single leading "&" (its
+    ``OPENA`` token is literally ``"[&"``): fed a genuine
+    ``&&subject='Pythonidae'`` comment, it would lex the second "&" as
+    part of the first attribute's key rather than stripping it
+    (confirmed by compiling and running BEAST2 v2.7.8's own generated
+    ANTLR lexer/parser plus ``processMetadata()``, copied verbatim,
+    against a standalone harness). This function deliberately departs
+    from that one lexer detail so it works as a drop-in
+    ``extract_comment_metadata`` regardless of which "&"-convention a
+    tree file happens to use.
 
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
     parse_comment_metadata_beast2_v2_7_8_nesting
     """
-    if comment.startswith("&"):
+    if comment.startswith("&&"):
+        body = comment[2:]
+    elif comment.startswith("&"):
         body = comment[1:]
     else:
         # unrecognized metadata pattern
@@ -684,7 +690,9 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     --------
     parse_comment_metadata_beast2_v2_7_8
     """
-    if comment.startswith("&"):
+    if comment.startswith("&&"):
+        body = comment[2:]
+    elif comment.startswith("&"):
         body = comment[1:]
     else:
         # unrecognized metadata pattern

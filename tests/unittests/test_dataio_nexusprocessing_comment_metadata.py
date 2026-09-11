@@ -211,14 +211,16 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&'a key'=1")
         self.assertEqual(list(d), [("'a key'", 1.0)])
 
-    def test_double_ampersand_is_not_special(self):
-        # unlike parse_comment_metadata_dendropy_v5_0_0, a leading "&&"
-        # is not an NHX marker to BEAST2: its lexer only ever strips a
-        # single leading "&" (OPENA is literally "[&"), so the second
-        # "&" lexes as part of the first attribute's key
+    def test_double_ampersand_is_stripped_like_single(self):
+        # a leading "&&" (NHX-style) is stripped just like "&", for
+        # parity with parse_comment_metadata_dendropy_v5_0_0; real
+        # BEAST2's own lexer only ever strips a single leading "&"
+        # (OPENA is literally "[&"), but this parser deliberately
+        # departs from that lexer detail so it works as a drop-in
+        # extract_comment_metadata regardless of "&"-convention
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
                 "&&subject='Pythonidae'")
-        self.assertEqual(list(d), [("&subject", "Pythonidae")])
+        self.assertEqual(list(d), [("subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
@@ -328,10 +330,10 @@ class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTes
                 "&x=1,x=2,y=9")
         self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
-    def test_double_ampersand_is_not_special(self):
+    def test_double_ampersand_is_stripped_like_single(self):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
                 "&&subject='Pythonidae'")
-        self.assertEqual(list(d), [("&subject", "Pythonidae")])
+        self.assertEqual(list(d), [("subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
