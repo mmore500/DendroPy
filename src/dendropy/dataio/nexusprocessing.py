@@ -26,6 +26,7 @@ import re
 import itertools
 import decimal
 import functools
+import warnings
 from dendropy.dataio.tokenizer import Tokenizer
 from dendropy.utility import textprocessing
 from dendropy.utility import container
@@ -466,6 +467,21 @@ def _beast2_v2_7_8_unquote(text):
     # BEAST2 tests only the leading quote, then strips both ends
     return text[1:-1] if text[:1] in ("'", '"') else text
 
+def _beast2_v2_7_8_strip_marker(comment):
+    # returns None for an unrecognized comment; real BEAST2's lexer only
+    # ever strips a single leading "&" (OPENA is literally "[&"), so a
+    # second "&" is left to lex as part of the first attribute's key
+    if comment.startswith("&&"):
+        warnings.warn(
+                "BEAST2 comment metadata parsers do not treat a leading"
+                " \"&&\" as an NHX-style marker: the second \"&\" is parsed"
+                " as part of the first attribute's key, matching real"
+                " BEAST2's lexer.")
+    if comment.startswith("&"):
+        return comment[1:]
+    else:
+        return None
+
 def _beast2_v2_7_8_raw_text(value_tree):
     # BEAST2 skips whitespace in its lexer, so the ``getText()`` that
     # ``processMetadata()`` calls on each element never contains any
@@ -587,19 +603,17 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
 
     Notes
     -----
-    A leading "&&" is stripped like a single "&" (unlike real BEAST2's
-    lexer) for parity with :func:`parse_comment_metadata_dendropy_v5_0_0`.
+    A leading "&&" is not treated as an NHX-style marker: only a single
+    leading "&" is stripped, matching real BEAST2's own lexer, and a
+    ``UserWarning`` is issued.
 
     See Also
     --------
     parse_comment_metadata_dendropy_v5_0_0
     parse_comment_metadata_beast2_v2_7_8_nesting
     """
-    if comment.startswith("&&"):
-        body = comment[2:]
-    elif comment.startswith("&"):
-        body = comment[1:]
-    else:
+    body = _beast2_v2_7_8_strip_marker(comment)
+    if body is None:
         # unrecognized metadata pattern
         return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer()
@@ -652,15 +666,18 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
         If ``comment`` is not well-formed according to the BEAST2
         v2.7.8 metadata comment grammar.
 
+    Notes
+    -----
+    A leading "&&" is not treated as an NHX-style marker: only a single
+    leading "&" is stripped, matching real BEAST2's own lexer, and a
+    ``UserWarning`` is issued.
+
     See Also
     --------
     parse_comment_metadata_beast2_v2_7_8
     """
-    if comment.startswith("&&"):
-        body = comment[2:]
-    elif comment.startswith("&"):
-        body = comment[1:]
-    else:
+    body = _beast2_v2_7_8_strip_marker(comment)
+    if body is None:
         # unrecognized metadata pattern
         return {}.items()
     standalone, parser, transformer = _beast2_v2_7_8_parser_and_transformer_nesting()

@@ -211,11 +211,12 @@ class Beast2V2_7_8CommentMetadataParsingTestCase(dendropytest.ExtendedTestCase):
         d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8("&'a key'=1")
         self.assertEqual(list(d), [("'a key'", 1.0)])
 
-    def test_double_ampersand_is_stripped_like_single(self):
-        # departs from exact BEAST2 fidelity
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
-                "&&subject='Pythonidae'")
-        self.assertEqual(list(d), [("subject", "Pythonidae")])
+    def test_double_ampersand_warns_and_is_not_stripped(self):
+        # matches real BEAST2's lexer, not parse_comment_metadata_dendropy_v5_0_0
+        with self.assertWarns(UserWarning):
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8(
+                    "&&subject='Pythonidae'")
+        self.assertEqual(list(d), [("&subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
@@ -318,10 +319,11 @@ class Beast2V2_7_8NestingCommentMetadataParsingTestCase(dendropytest.ExtendedTes
                 "&x=1,x=2,y=9")
         self.assertEqual(list(d), [("x", 2.0), ("y", 9.0)])
 
-    def test_double_ampersand_is_stripped_like_single(self):
-        d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
-                "&&subject='Pythonidae'")
-        self.assertEqual(list(d), [("subject", "Pythonidae")])
+    def test_double_ampersand_warns_and_is_not_stripped(self):
+        with self.assertWarns(UserWarning):
+            d = nexusprocessing.parse_comment_metadata_beast2_v2_7_8_nesting(
+                    "&&subject='Pythonidae'")
+        self.assertEqual(list(d), [("&subject", "Pythonidae")])
 
     def test_empty_comment_returns_empty(self):
         self.assertEqual(
