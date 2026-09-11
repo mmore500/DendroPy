@@ -22,7 +22,6 @@
 Specialized tokenizer for processing NEXUS/Newick streams.
 """
 
-import os
 import re
 import itertools
 import decimal
@@ -31,7 +30,6 @@ import warnings
 from dendropy.dataio.tokenizer import Tokenizer
 from dendropy.utility import textprocessing
 from dendropy.utility import container
-from dendropy.utility import metavar
 from dendropy.datamodel import basemodel
 
 ##############################################################################
@@ -433,34 +431,14 @@ def parse_comment_metadata_to_annotations(
 ## parse_comment_metadata_dendropy_v5_0_0, does not understand NHX's
 ## "&&"-prefixed convention.
 
-class NHXMarkerWarning(UserWarning):
-    pass
-
-NHX_MARKER_WARNING_FILTER = None
-_NHX_MARKER_WARNINGS_CONFIGURED = False
-
-def configure_nhx_marker_warning_behavior(warning_filter=None):
-    global NHX_MARKER_WARNING_FILTER
-    global _NHX_MARKER_WARNINGS_CONFIGURED
-    if warning_filter is None:
-        warning_filter = os.environ.get(
-                metavar.NHX_MARKER_WARNING_FILTER, "default")
-    NHX_MARKER_WARNING_FILTER = warning_filter
-    warnings.simplefilter(NHX_MARKER_WARNING_FILTER, NHXMarkerWarning)
-    _NHX_MARKER_WARNINGS_CONFIGURED = True
-
-def _initialize_nhx_marker_warnings():
-    if not _NHX_MARKER_WARNINGS_CONFIGURED:
-        configure_nhx_marker_warning_behavior()
-
 def _warn_if_nhx_marker(comment, parser_name):
     if comment.startswith("&&"):
-        _initialize_nhx_marker_warnings()
         warnings.warn(
                 "{} do not treat a leading \"&&\" as an NHX-style marker:"
                 " the second \"&\" is parsed as part of the first"
-                " attribute's key.".format(parser_name),
-                category=NHXMarkerWarning)
+                " attribute's key. To silence this, strip it yourself"
+                " first, e.g. extract_comment_metadata=lambda comment:"
+                " parser(re.sub(r'^&&', '&', comment)).".format(parser_name))
 
 ###############################################################################
 ## Metadata: BEAST2 v2.7.8 comment metadata idiom
@@ -639,9 +617,7 @@ def parse_comment_metadata_beast2_v2_7_8(comment):
     -----
     A leading "&&" is not treated as an NHX-style marker: only a single
     leading "&" is stripped, matching real BEAST2's own lexer, and a
-    :class:`NHXMarkerWarning` is issued. Its filter can be set via
-    the ``DENDROPY_NHX_MARKER_WARNINGS`` environment variable or
-    :func:`configure_nhx_marker_warning_behavior`.
+    ``UserWarning`` is issued (see its message for how to silence it).
 
     See Also
     --------
@@ -706,9 +682,7 @@ def parse_comment_metadata_beast2_v2_7_8_nesting(comment):
     -----
     A leading "&&" is not treated as an NHX-style marker: only a single
     leading "&" is stripped, matching real BEAST2's own lexer, and a
-    :class:`NHXMarkerWarning` is issued. Its filter can be set via
-    the ``DENDROPY_NHX_MARKER_WARNINGS`` environment variable or
-    :func:`configure_nhx_marker_warning_behavior`.
+    ``UserWarning`` is issued (see its message for how to silence it).
 
     See Also
     --------

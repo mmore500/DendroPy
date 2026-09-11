@@ -36,4 +36,3 @@ DENDROPY_RSCRIPT_PATH_ENVAR        = "DENDROPY_RSCRIPT_EXECUTABLE_PATH"
 # module: Print the warning the first time it is generated from each module.
 # once: Print the warning the first time it is generated.
 DEPRECATION_WARNING_FILTER         = "DENDROPY_DEPRECATION_WARNINGS"
-NHX_MARKER_WARNING_FILTER          = "DENDROPY_NHX_MARKER_WARNINGS"
