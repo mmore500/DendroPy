@@ -356,7 +356,7 @@ def parse_comment_metadata_dendropy_v5_0_0(
         A dictionary mapping field names (as given in the comment
         string) to the value type (e.g. {"node-age" : float}). Applied
         element-wise to list ("vector") values, and to values that are
-        neither quoted nor ``true``/``false``.
+        neither double-quoted nor ``true``/``false``.
     ``strip_leading_trailing_spaces`` : boolean
         Remove whitespace from comments.
 
